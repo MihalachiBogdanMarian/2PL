@@ -15,15 +15,16 @@ public interface Operation extends Serializable {
 
     void setTableName(String name);
 
-    default Operation reverseOperation() {
-        return null;
-    }
-
-    ;
-
     default List<Map<String, Object>> execute(Connection conn1, Connection conn2) {
         System.out.println(this.getClass().toString() + " executing...");
         return null;
     }
 
+    default Operation compensationOperation() {
+        return null;
+    }
+
+    default List<Operation> compensationOperations() {
+        return null;
+    }
 }

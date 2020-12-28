@@ -11,9 +11,13 @@ select * from flights;
 select * from stopovers;
 select * from airport1_tickets;
 select * from airport1_flights_staff;
-select * from airport1_flights_cache;
+select * from airport1_flights_deposit;
 
-insert into airport1_users values (101, 'Dave', 'Miller', to_date('25/01/1985', 'dd/mm/yyyy'), 'Ohio', '0794781254', 'dave101@user.com', '8GMLWPO90S', 'admin', 0);
+select * from user_ids;
+select * from c##airport1.flight_details@dblink;
+
+delete from airport1_users where id = 100;
+commit;
 
 
 
@@ -70,7 +74,7 @@ update airport1_users set logged = 1 where id = 11;
 select * from flights where id = 200;
 delete from stopovers where flight_id = 200;
 delete from airport1_flights_staff where flight_id = 200;
-insert into airport1_flights_cache values(200, date '2021-01-14', 180, 0, 2500, 1, 'Dallas/Fort Worth', 15, 75, 5, 450, 800, 'success', null);
+insert into airport1_flights_deposit values(200, date '2021-01-14', 180, 0, 2500, 1, 'Dallas/Fort Worth', 15, 75, 5, 450, 800, 'success', null);
 delete from flights where id = 200;
 update airport1_users set logged = 0 where id = 11;
 commit;
@@ -80,13 +84,13 @@ commit;
 select id from airport1_users where email = 'dave101@user.com' and password = '8GMLWPO90S' and type = 'admin';
 update airport1_users set logged = 1 where id = 11;
 select * from flights where id = 75;
-insert into airport1_flights_cache values(75, date '2021-10-10', 242, 0, 4230, 2, 'Houston IAH', 9, 53, 19, 382, 559, 'bad weather', date '2021-10-30');
-update flights set departure_date = date '2021-10-30' where id = 11;
+insert into airport1_flights_deposit values(75, date '2021-10-10', 242, 0, 4230, 2, 'Houston IAH', 9, 53, 19, 382, 559, 'bad weather', date '2021-10-30');
+update flights set departure_date = date '2021-10-30' where id = 75;
 update airport1_users set logged = 0 where id = 11;
 commit;
 
 /* USE CASE 8 */
-/* buy a ticket  */
+/* buy a ticket */
 select id from airport1_users where email = 'john1@user.com' and password = '8DHW6LC20O';
 update airport1_users set logged = 1 where id = 100;
 select * from flights where id = 60;

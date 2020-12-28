@@ -10,8 +10,8 @@ import java.util.Map;
 
 public class Select extends AbstractOperation {
 
-    private List<String> fields;
-    private List<SearchCondition> searchConditions;
+    private final List<String> fields;
+    private final List<SearchCondition> searchConditions;
 
     public Select(String tableName, List<String> fields, List<SearchCondition> searchConditions) {
         this.setName("select");

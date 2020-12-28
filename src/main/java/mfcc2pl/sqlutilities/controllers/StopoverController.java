@@ -20,6 +20,8 @@ public class StopoverController {
         this.conn = conn;
     }
 
+
+
     public void insertStopover(Stopover stopover) {
         try {
             String insertStatement = "insert into stopovers(stop_number, flight_id, airport_name, time, price_first_class, price_second_class, departure_date) " +

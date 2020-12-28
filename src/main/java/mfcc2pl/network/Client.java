@@ -74,7 +74,7 @@ public class Client {
                 new Select("flights", Arrays.asList("*"), Arrays.asList(new SearchCondition("id", "=", "200"))),
                 new Delete("stopovers", Arrays.asList(new SearchCondition("flight_id", "=", "200"))),
                 new Delete("flights_staff", Arrays.asList(new SearchCondition("flight_id", "=", "200"))),
-                new Insert("flights_cache", new FlightInCache(200, Date.valueOf("2021-01-14"), 180, 0, 2500, 1, "Dallas/Fort Worth", 15, 75, 5, 450, 800, "success", null)),
+                new Insert("flights_cache", new FlightInDeposit(200, Date.valueOf("2021-01-14"), 180, 0, 2500, 1, "Dallas/Fort Worth", 15, 75, 5, 450, 800, "success", null)),
                 new Delete("flights", Arrays.asList(new SearchCondition("id", "=", "200"))),
                 new Update("users", "u", "logged", 0, Arrays.asList(new SearchCondition("id", "=", 11))),
                 new Commit()
@@ -84,7 +84,7 @@ public class Client {
                 new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "dave101@user.com"), new SearchCondition("password", "=", "8GMLWPO90S"), new SearchCondition("type", "=", "admin"))),
                 new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 11))),
                 new Select("flights", Arrays.asList("*"), Arrays.asList(new SearchCondition("id", "=", "101"))),
-                new Insert("flights_cache", new FlightInCache(101, Date.valueOf("2021-01-18"), 180, 0, 2500, 3, "Beijing Capital International Airport", 1, 150, 80, 450, 800, "bad weather", Date.valueOf("2021-01-28"))),
+                new Insert("flights_cache", new FlightInDeposit(101, Date.valueOf("2021-01-18"), 180, 0, 2500, 3, "Beijing Capital International Airport", 1, 150, 80, 450, 800, "bad weather", Date.valueOf("2021-01-28"))),
                 new Update("flights", "u", "departure_date", Date.valueOf("2021-01-28"), Arrays.asList(new SearchCondition("id", "=", 101))),
                 new Update("users", "u", "logged", 0, Arrays.asList(new SearchCondition("id", "=", 11))),
                 new Commit()
@@ -127,15 +127,23 @@ public class Client {
         Utilities.store(transactionNumber + 1, "..\\2PL\\src\\main\\resources\\current_transaction.txt");
         Socket socket = new Socket(SERVER_ADDRESS, PORT);
 
-        System.out.println("Press any key to start the transaction: ");
-        client.readFromKeyboard();
-
-        System.out.println("Sending the operations to the server: ");
         List<Operation> transaction = transactions.get(transactionNumber);
-        for (int i = 0; i < transaction.size(); i++) {
-            String response = client.sendOperationToServer(transaction.get(i), socket);
-            System.out.println(response);
+        while (!transaction.isEmpty()) {
+            System.out.println("Press any key to send the next operation: ");
+            client.readFromKeyboard();
+
+
         }
+
+//        System.out.println("Press any key to start the transaction: ");
+//        client.readFromKeyboard();
+//
+//        System.out.println("Sending the operations to the server: ");
+//        List<Operation> transaction = transactions.get(transactionNumber);
+//        for (int i = 0; i < transaction.size(); i++) {
+//            String response = client.sendOperationToServer(transaction.get(i), socket);
+//            System.out.println(response);
+//        }
     }
 
     public String sendOperationToServer(Operation operation, Socket socket) throws IOException {

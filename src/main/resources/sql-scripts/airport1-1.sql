@@ -19,7 +19,7 @@ drop materialized view log on users;
 drop table users cascade constraints;
 drop table tickets cascade constraints;
 drop table flights_staff cascade constraints;
-drop table flights_cache cascade constraints;
+drop table flights_deposit cascade constraints;
 
 
 
@@ -167,5 +167,6 @@ begin
 end;
 /
 
+insert into users values (101, 'Dave', 'Miller', to_date('25/01/1985', 'dd/mm/yyyy'), 'Ohio', '0794781254', 'dave101@user.com', '8GMLWPO90S', 'admin', 0);
 commit;
-select * from users;
+--select * from users;

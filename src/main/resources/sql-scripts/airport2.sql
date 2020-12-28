@@ -18,8 +18,8 @@ drop synonym airport1_tickets;
 create synonym airport1_tickets for c##airport1.tickets@dblink;
 drop synonym airport1_flights_staff;
 create synonym airport1_flights_staff for c##airport1.flights_staff@dblink;
-drop synonym airport1_flights_cache;
-create synonym airport1_flights_cache for c##airport1.flights_cache@dblink;
+drop synonym airport1_flights_deposit;
+create synonym airport1_flights_deposit for c##airport1.flights_deposit@dblink;
 
 drop materialized view log on flights;
 drop table stopovers cascade constraints;
@@ -66,7 +66,7 @@ insert into companies values(24, 'Ryanair', 'Airside Business Park Swords Co. Du
 insert into companies values(25, 'Japan Airlines', 'Nomura Real Estate Bldg., 2-4-11 Higashi-Shinagawa, Shinagawa-ku, Tokyo', 'Tokyo', '0012478950', 'japan_airlines@office.com');
 
 commit;
-select * from companies;
+--select * from companies;
 
 
 
@@ -83,15 +83,15 @@ select * from user_ids;
 create table feedback(
   	user_id number(10, 0),
   	company_id number(10, 0),
-  	message varchar(500) not null,
-    --foreign key (company_id) references companies(id),
-    foreign key (user_id) references user_ids(id) on delete set null
+--    foreign key (company_id) references companies(id),
+--    foreign key (user_id) references user_ids(id) on delete set null,
+  	message varchar(500) not null
 ) tablespace airport;
 
 insert into feedback values (1, 1, 'Very good services! I''ll definitely fly again with you Sir!');
 
 commit;
-select * from feedback;
+--select * from feedback;
 
 
 
@@ -124,7 +124,7 @@ end;
 /
 
 commit;
-select * from airplanes;
+--select * from airplanes;
 
 
 
@@ -274,6 +274,8 @@ begin
 end;
 /
 
+insert into flights values (101, date '2021-01-14', 180, 0, 2500, 3, 'Beijing Capital International Airport', 1, 150, 80, 450, 800);
+insert into flights values (102, date '2021-02-09', 240, 0, 3000, 2, 'Los Angeles International Airport', 2, 120, 50, 300, 600);
 commit;
-select * from flights;
-select * from stopovers;
+--select * from flights;
+--select * from stopovers;

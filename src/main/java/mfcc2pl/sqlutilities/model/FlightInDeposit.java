@@ -3,7 +3,7 @@ package mfcc2pl.sqlutilities.model;
 import java.io.Serializable;
 import java.sql.Date;
 
-public class FlightInCache implements Serializable {
+public class FlightInDeposit implements Serializable {
 
     private int id;
     private Date departureDate;
@@ -20,7 +20,7 @@ public class FlightInCache implements Serializable {
     private String reason;
     private Date rescheduled;
 
-    public FlightInCache() {
+    public FlightInDeposit() {
         this.id = -1;
         this.departureDate = null;
         this.duration = 0;
@@ -37,7 +37,7 @@ public class FlightInCache implements Serializable {
         this.rescheduled = null;
     }
 
-    public FlightInCache(int id, Date departureDate, int duration, int delay, int distance, int stopovers, String airportName, int airplaneId, int firstClassSeats, int secondClassSeats, int firstClassPrice, int secondClassPrice, String reason, Date rescheduled) {
+    public FlightInDeposit(int id, Date departureDate, int duration, int delay, int distance, int stopovers, String airportName, int airplaneId, int firstClassSeats, int secondClassSeats, int firstClassPrice, int secondClassPrice, String reason, Date rescheduled) {
         this.id = id;
         this.departureDate = departureDate;
         this.duration = duration;
