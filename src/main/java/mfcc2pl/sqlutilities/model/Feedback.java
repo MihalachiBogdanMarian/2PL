@@ -1,6 +1,8 @@
 package mfcc2pl.sqlutilities.model;
 
-public class Feedback {
+import java.io.Serializable;
+
+public class Feedback implements Serializable {
 
     private int userId;
     private int companyId;

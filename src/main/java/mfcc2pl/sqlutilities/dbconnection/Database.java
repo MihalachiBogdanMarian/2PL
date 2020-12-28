@@ -16,8 +16,6 @@ public class Database {
     private static final String PASSWORD1 = "c##airport1";
     private static final String USER2 = "c##airport2";
     private static final String PASSWORD2 = "c##airport2";
-    private static Connection connection1 = null;
-    private static Connection connection2 = null;
 
     private static final Map<String, Integer> tablesMappingToConnections = Map.ofEntries(
             entry("users", 1),
@@ -28,7 +26,9 @@ public class Database {
             entry("feedback", 2),
             entry("airplanes", 2),
             entry("flights", 2),
-            entry("stopovers", 2)
+            entry("stopovers", 2),
+            entry("flight_details", 1),
+            entry("user_ids", 2)
     );
 
     private Database() {
@@ -36,15 +36,9 @@ public class Database {
 
     public static Connection getConnection(int nr) {
         if (nr == 1) {
-            if (connection1 == null) {
-                createConnection(1);
-            }
-            return connection1;
+            return createConnection(1);
         } else {
-            if (connection2 == null) {
-                createConnection(2);
-            }
-            return connection2;
+            return createConnection(2);
         }
     }
 
@@ -53,82 +47,38 @@ public class Database {
         return getConnection(nr);
     }
 
-    public static void closeConnection(int nr) {
-        if (nr == 1) {
-            if (connection1 != null) {
-                try {
-                    connection1.close();
-                } catch (SQLException ex) {
-                    Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        } else {
-            if (connection2 != null) {
-                try {
-                    connection2.close();
-                } catch (SQLException ex) {
-                    Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
-                }
+    public static void closeConnection(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
 
-    public static void closeConnection(String tableName) {
-        int nr = tablesMappingToConnections.get(tableName);
-        closeConnection(nr);
-    }
-
-    public static void commit(int nr) {
-        if (nr == 1) {
-            if (connection1 != null) {
-                try {
-                    connection1.commit();
-                } catch (SQLException ex) {
-                    Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        } else {
-            if (connection2 != null) {
-                try {
-                    connection2.commit();
-                } catch (SQLException ex) {
-                    Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
-                }
+    public static void commit(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.commit();
+            } catch (SQLException ex) {
+                Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
 
-    public static void commit(String tableName) {
-        int nr = tablesMappingToConnections.get(tableName);
-        commit(nr);
-    }
-
-    public static void rollback(int nr) {
-        if (nr == 1) {
-            if (connection1 != null) {
-                try {
-                    connection1.rollback();
-                } catch (SQLException ex) {
-                    Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        } else {
-            if (connection2 != null) {
-                try {
-                    connection2.rollback();
-                } catch (SQLException ex) {
-                    Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
-                }
+    public static void rollback(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
 
-    public static void rollback(String tableName) {
-        int nr = tablesMappingToConnections.get(tableName);
-        rollback(nr);
-    }
-
-    private static void createConnection(int nr) {
+    private static Connection createConnection(int nr) {
+        Connection conn = null;
         try {
             Class.forName("oracle.jdbc.driver.OracleDriver");
         } catch (ClassNotFoundException e) {
@@ -137,14 +87,15 @@ public class Database {
         }
         try {
             if (nr == 1) {
-                connection1 = DriverManager.getConnection(URL, USER1, PASSWORD1);
-                connection1.setAutoCommit(false);
+                conn = DriverManager.getConnection(URL, USER1, PASSWORD1);
+//                conn.setAutoCommit(false);
             } else {
-                connection2 = DriverManager.getConnection(URL, USER2, PASSWORD2);
-                connection2.setAutoCommit(false);
+                conn = DriverManager.getConnection(URL, USER2, PASSWORD2);
+//                conn.setAutoCommit(false);
             }
         } catch (SQLException ex) {
             Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return conn;
     }
 }

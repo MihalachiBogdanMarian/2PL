@@ -1,6 +1,8 @@
-package mfcc2pl.utilities2pl.operations;
+package mfcc2pl.sqlutilities.model;
 
-public class SearchCondition {
+import java.io.Serializable;
+
+public class SearchCondition implements Serializable {
 
     private String fieldName;
     private String operator;

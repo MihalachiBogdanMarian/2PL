@@ -1,7 +1,8 @@
 package mfcc2pl;
 
-import mfcc2pl.utilities2pl.operations.SearchCondition;
+import mfcc2pl.sqlutilities.model.SearchCondition;
 
+import java.io.*;
 import java.util.List;
 
 public class Utilities {
@@ -96,5 +97,39 @@ public class Utilities {
             }
         }
         return updateStatement;
+    }
+
+    public static void store(int value, String filename) {
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(filename);
+            fileWriter.write(String.valueOf(value));
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (fileWriter != null) {
+                    fileWriter.flush();
+                    fileWriter.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static int retrieve(String filename) {
+        int value = -1;
+        try {
+            FileReader reader = new FileReader(filename);
+            BufferedReader bufferedReader = new BufferedReader(reader);
+
+            value = Integer.parseInt(bufferedReader.readLine());
+
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return value;
     }
 }

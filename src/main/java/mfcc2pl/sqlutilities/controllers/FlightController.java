@@ -1,25 +1,30 @@
 package mfcc2pl.sqlutilities.controllers;
 
 import mfcc2pl.Utilities;
-import mfcc2pl.sqlutilities.dbconnection.Database;
 import mfcc2pl.sqlutilities.model.Flight;
-import mfcc2pl.utilities2pl.operations.SearchCondition;
+import mfcc2pl.sqlutilities.model.SearchCondition;
 
-import java.sql.Date;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FlightController {
 
-    public static void insertFlight(Flight flight) {
-        try {
-            Connection con = Database.getConnection("flights");
+    public Connection conn;
 
+    public FlightController(Connection conn) {
+        this.conn = conn;
+    }
+
+    public void insertFlight(Flight flight) {
+        try {
             String insertStatement = "insert into flights(id, departure_date, duration, delay, distance, stopovers, airport_name, airplane_id, first_class_seats, second_class_seats, first_class_price, second_class_price) " +
                     "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            PreparedStatement pstmt = con.prepareStatement(insertStatement);
+            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
             pstmt.setInt(1, flight.getId());
             pstmt.setDate(2, flight.getDepartureDate());
             pstmt.setInt(3, flight.getDuration());
@@ -39,15 +44,13 @@ public class FlightController {
         }
     }
 
-    public static List<Map<String, Object>> selectFlights(List<String> fields, List<SearchCondition> searchConditions) {
+    public List<Map<String, Object>> selectFlights(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> flights = new ArrayList<>();
-
-        Connection con = Database.getConnection("flights");
 
         String selectStatement = Utilities.formSelectStatement(fields, "flights", searchConditions);
 
         try {
-            PreparedStatement pstmt = con.prepareStatement(selectStatement);
+            PreparedStatement pstmt = conn.prepareStatement(selectStatement);
 
             for (int i = 0; i < searchConditions.size(); i++) {
                 if (searchConditions.get(i).getValue() instanceof Integer) {
@@ -99,9 +102,7 @@ public class FlightController {
         return flights;
     }
 
-    public static void updateFlights(String updateType, String fieldName, Object fieldValue, List<SearchCondition> searchConditions) {
-
-        Connection con = Database.getConnection("flights");
+    public void updateFlights(String updateType, String fieldName, Object fieldValue, List<SearchCondition> searchConditions) {
 
         String updateStatement;
         if (updateType.equals("u")) {
@@ -115,7 +116,7 @@ public class FlightController {
         }
 
         try {
-            PreparedStatement pstmt = con.prepareStatement(updateStatement);
+            PreparedStatement pstmt = conn.prepareStatement(updateStatement);
             if (fieldValue instanceof Integer) {
                 pstmt.setInt(1, (Integer) fieldValue);
             } else if (fieldValue instanceof Date) {
@@ -126,11 +127,23 @@ public class FlightController {
 
             for (int i = 0; i < searchConditions.size(); i++) {
                 if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 2, (Integer) searchConditions.get(i).getValue());
+                    if (updateType.equals("i") || updateType.equals("d")) {
+                        pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
+                    } else {
+                        pstmt.setInt(i + 2, (Integer) searchConditions.get(i).getValue());
+                    }
                 } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 2, (Date) searchConditions.get(i).getValue());
+                    if (updateType.equals("i") || updateType.equals("d")) {
+                        pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
+                    } else {
+                        pstmt.setDate(i + 2, (Date) searchConditions.get(i).getValue());
+                    }
                 } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 2, searchConditions.get(i).getValue().toString());
+                    if (updateType.equals("i") || updateType.equals("d")) {
+                        pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
+                    } else {
+                        pstmt.setString(i + 2, searchConditions.get(i).getValue().toString());
+                    }
                 }
             }
 
@@ -141,14 +154,12 @@ public class FlightController {
         }
     }
 
-    public static void deleteFlights(List<SearchCondition> searchConditions) {
-
-        Connection con = Database.getConnection("flights");
+    public void deleteFlights(List<SearchCondition> searchConditions) {
 
         String deleteStatement = Utilities.formDeleteStatement("flights", searchConditions);
 
         try {
-            PreparedStatement pstmt = con.prepareStatement(deleteStatement);
+            PreparedStatement pstmt = conn.prepareStatement(deleteStatement);
 
             for (int i = 0; i < searchConditions.size(); i++) {
                 if (searchConditions.get(i).getValue() instanceof Integer) {

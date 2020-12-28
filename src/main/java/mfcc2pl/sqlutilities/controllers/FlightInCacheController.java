@@ -1,23 +1,27 @@
 package mfcc2pl.sqlutilities.controllers;
 
-import mfcc2pl.sqlutilities.dbconnection.Database;
 import mfcc2pl.sqlutilities.model.FlightInCache;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FlightInCacheController {
 
-    public static void insertFlightInCache(FlightInCache flightInCache) {
-        try {
-            Connection con = Database.getConnection("flights");
+    public Connection conn;
 
-            String insertStatement = "insert into flights(id, departure_date, duration, delay, distance, stopovers, airport_name, airplane_id, first_class_seats, second_class_seats, first_class_price, second_class_price, reason, rescheduled) " +
+    public FlightInCacheController(Connection conn) {
+        this.conn = conn;
+    }
+
+    public void insertFlightInCache(FlightInCache flightInCache) {
+        try {
+            String insertStatement = "insert into flights_cache(flight_id, departure_date, duration, delay, distance, stopovers, airport_name, airplane_id, first_class_seats, second_class_seats, first_class_price, second_class_price, reason, rescheduled) " +
                     "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            PreparedStatement pstmt = con.prepareStatement(insertStatement);
+            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
             pstmt.setInt(1, flightInCache.getId());
             pstmt.setDate(2, flightInCache.getDepartureDate());
             pstmt.setInt(3, flightInCache.getDuration());
@@ -31,7 +35,11 @@ public class FlightInCacheController {
             pstmt.setInt(11, flightInCache.getFirstClassPrice());
             pstmt.setInt(12, flightInCache.getSecondClassPrice());
             pstmt.setString(13, flightInCache.getReason());
-            pstmt.setDate(14, flightInCache.getRescheduled());
+            if (flightInCache.getRescheduled() == null) {
+                pstmt.setNull(14, Types.NULL);
+            } else {
+                pstmt.setDate(14, flightInCache.getRescheduled());
+            }
             pstmt.executeUpdate();
             pstmt.close();
         } catch (SQLException ex) {

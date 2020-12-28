@@ -1,8 +1,9 @@
 package mfcc2pl.sqlutilities.model;
 
+import java.io.Serializable;
 import java.sql.Date;
 
-public class Flight {
+public class Flight implements Serializable {
 
     private int id;
     private Date departureDate;

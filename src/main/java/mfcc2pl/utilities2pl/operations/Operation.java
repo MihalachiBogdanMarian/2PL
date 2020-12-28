@@ -1,9 +1,11 @@
 package mfcc2pl.utilities2pl.operations;
 
+import java.io.Serializable;
+import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 
-public interface Operation {
+public interface Operation extends Serializable {
 
     String getName();
 
@@ -15,9 +17,11 @@ public interface Operation {
 
     default Operation reverseOperation() {
         return null;
-    };
+    }
 
-    default List<Map<String, Object>> execute() {
+    ;
+
+    default List<Map<String, Object>> execute(Connection conn1, Connection conn2) {
         System.out.println(this.getClass().toString() + " executing...");
         return null;
     }

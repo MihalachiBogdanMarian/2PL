@@ -1,6 +1,8 @@
 package mfcc2pl.sqlutilities.model;
 
-public class Company {
+import java.io.Serializable;
+
+public class Company implements Serializable {
 
     private int id;
     private String name;

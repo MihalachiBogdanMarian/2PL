@@ -29,7 +29,7 @@ public class AbstractOperation implements Operation {
     public String toString() {
         return "AbstractOperation{" +
                 "name='" + name + '\'' +
-                ", table='" + tableName + '\'' +
+                ", tableName='" + tableName + '\'' +
                 '}';
     }
 }

@@ -1,8 +1,9 @@
 package mfcc2pl.sqlutilities.model;
 
+import java.io.Serializable;
 import java.sql.Date;
 
-public class Stopover {
+public class Stopover implements Serializable {
 
     private int stopNumber;
     private int flightId;

@@ -1,25 +1,30 @@
 package mfcc2pl.sqlutilities.controllers;
 
 import mfcc2pl.Utilities;
-import mfcc2pl.sqlutilities.dbconnection.Database;
 import mfcc2pl.sqlutilities.model.Feedback;
-import mfcc2pl.utilities2pl.operations.SearchCondition;
+import mfcc2pl.sqlutilities.model.SearchCondition;
 
-import java.sql.Date;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FeedbackController {
 
-    public static void insertFeedback(Feedback feedback) {
-        try {
-            Connection con = Database.getConnection("feedback");
+    public Connection conn;
 
+    public FeedbackController(Connection conn) {
+        this.conn = conn;
+    }
+
+    public void insertFeedback(Feedback feedback) {
+        try {
             String insertStatement = "insert into feedback(user_id, company_id, message) " +
                     "values (?, ?, ?)";
-            PreparedStatement pstmt = con.prepareStatement(insertStatement);
+            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
             pstmt.setInt(1, feedback.getUserId());
             pstmt.setInt(2, feedback.getCompanyId());
             pstmt.setString(3, feedback.getMessage());
@@ -30,15 +35,13 @@ public class FeedbackController {
         }
     }
 
-    public static List<Map<String, Object>> selectFeedback(List<String> fields, List<SearchCondition> searchConditions) {
+    public List<Map<String, Object>> selectFeedback(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> feedbackList = new ArrayList<>();
-
-        Connection con = Database.getConnection("feedback");
 
         String selectStatement = Utilities.formSelectStatement(fields, "feedback", searchConditions);
 
         try {
-            PreparedStatement pstmt = con.prepareStatement(selectStatement);
+            PreparedStatement pstmt = conn.prepareStatement(selectStatement);
 
             for (int i = 0; i < searchConditions.size(); i++) {
                 if (searchConditions.get(i).getValue() instanceof Integer) {

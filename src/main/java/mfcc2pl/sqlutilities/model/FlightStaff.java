@@ -1,6 +1,8 @@
 package mfcc2pl.sqlutilities.model;
 
-public class FlightStaff {
+import java.io.Serializable;
+
+public class FlightStaff implements Serializable {
 
     private int flightId;
     private int userId;

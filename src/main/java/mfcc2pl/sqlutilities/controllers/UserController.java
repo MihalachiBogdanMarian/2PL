@@ -1,25 +1,31 @@
 package mfcc2pl.sqlutilities.controllers;
 
 import mfcc2pl.Utilities;
-import mfcc2pl.sqlutilities.dbconnection.Database;
+import mfcc2pl.sqlutilities.model.SearchCondition;
 import mfcc2pl.sqlutilities.model.User;
-import mfcc2pl.utilities2pl.operations.SearchCondition;
 
 import java.sql.*;
-import java.sql.Date;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class UserController {
 
-    public static void insertUser(User user) {
-        try {
-            Connection con = Database.getConnection("users");
+    public Connection conn;
 
-            String insertStatement = "insert into users(id, first_name, last_name, birthday, address, phone_number, email, password, type, logged) " +
-                    "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            PreparedStatement pstmt = con.prepareStatement(insertStatement);
+    public UserController(Connection conn) {
+        this.conn = conn;
+    }
+
+    public void insertUser(User user) {
+        String insertStatement = "insert into users " +
+                "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try {
+            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
             pstmt.setInt(1, user.getId());
             pstmt.setString(2, user.getFirstName());
             pstmt.setString(3, user.getLastName());
@@ -37,15 +43,13 @@ public class UserController {
         }
     }
 
-    public static List<Map<String, Object>> selectUsers(List<String> fields, List<SearchCondition> searchConditions) {
+    public List<Map<String, Object>> selectUsers(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> users = new ArrayList<>();
-
-        Connection con = Database.getConnection("users");
 
         String selectStatement = Utilities.formSelectStatement(fields, "users", searchConditions);
 
         try {
-            PreparedStatement pstmt = con.prepareStatement(selectStatement);
+            PreparedStatement pstmt = conn.prepareStatement(selectStatement);
 
             for (int i = 0; i < searchConditions.size(); i++) {
                 if (searchConditions.get(i).getValue() instanceof Integer) {
@@ -86,7 +90,7 @@ public class UserController {
                     users.add(user);
                 }
             }
-            pstmt.executeUpdate();
+            pstmt.execute();
             pstmt.close();
         } catch (SQLException ex) {
             Logger.getLogger(UserController.class.getName()).log(Level.SEVERE, null, ex);
@@ -95,9 +99,7 @@ public class UserController {
         return users;
     }
 
-    public static void updateUsers(String updateType, String fieldName, Object fieldValue, List<SearchCondition> searchConditions) {
-
-        Connection con = Database.getConnection("users");
+    public void updateUsers(String updateType, String fieldName, Object fieldValue, List<SearchCondition> searchConditions) {
 
         String updateStatement;
         if (updateType.equals("u")) {
@@ -111,7 +113,7 @@ public class UserController {
         }
 
         try {
-            PreparedStatement pstmt = con.prepareStatement(updateStatement);
+            PreparedStatement pstmt = conn.prepareStatement(updateStatement);
             if (fieldValue instanceof Integer) {
                 pstmt.setInt(1, (Integer) fieldValue);
             } else if (fieldValue instanceof Date) {
@@ -137,14 +139,12 @@ public class UserController {
         }
     }
 
-    public static void deleteUsers(List<SearchCondition> searchConditions) {
-
-        Connection con = Database.getConnection("users");
+    public void deleteUsers(List<SearchCondition> searchConditions) {
 
         String deleteStatement = Utilities.formDeleteStatement("users", searchConditions);
 
         try {
-            PreparedStatement pstmt = con.prepareStatement(deleteStatement);
+            PreparedStatement pstmt = conn.prepareStatement(deleteStatement);
 
             for (int i = 0; i < searchConditions.size(); i++) {
                 if (searchConditions.get(i).getValue() instanceof Integer) {

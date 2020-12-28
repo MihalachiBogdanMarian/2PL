@@ -1,6 +1,8 @@
 package mfcc2pl.sqlutilities.model;
 
-public class Airplane {
+import java.io.Serializable;
+
+public class Airplane implements Serializable {
 
     private int id;
     private int firstClassSeats;

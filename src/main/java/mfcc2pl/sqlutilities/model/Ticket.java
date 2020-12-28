@@ -1,6 +1,8 @@
 package mfcc2pl.sqlutilities.model;
 
-public class Ticket {
+import java.io.Serializable;
+
+public class Ticket implements Serializable {
 
     private int code;
     private int price;

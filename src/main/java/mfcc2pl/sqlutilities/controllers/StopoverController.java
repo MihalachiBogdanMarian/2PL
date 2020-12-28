@@ -1,25 +1,30 @@
 package mfcc2pl.sqlutilities.controllers;
 
 import mfcc2pl.Utilities;
-import mfcc2pl.sqlutilities.dbconnection.Database;
+import mfcc2pl.sqlutilities.model.SearchCondition;
 import mfcc2pl.sqlutilities.model.Stopover;
-import mfcc2pl.utilities2pl.operations.SearchCondition;
 
-import java.sql.Date;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class StopoverController {
 
-    public static void insertStopover(Stopover stopover) {
-        try {
-            Connection con = Database.getConnection("stopovers");
+    public Connection conn;
 
+    public StopoverController(Connection conn) {
+        this.conn = conn;
+    }
+
+    public void insertStopover(Stopover stopover) {
+        try {
             String insertStatement = "insert into stopovers(stop_number, flight_id, airport_name, time, price_first_class, price_second_class, departure_date) " +
                     "values (?, ?, ?, ?, ?, ?, ?)";
-            PreparedStatement pstmt = con.prepareStatement(insertStatement);
+            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
             pstmt.setInt(1, stopover.getStopNumber());
             pstmt.setInt(2, stopover.getFlightId());
             pstmt.setString(3, stopover.getAirportName());
@@ -27,21 +32,20 @@ public class StopoverController {
             pstmt.setInt(5, stopover.getPriceFirstClass());
             pstmt.setInt(6, stopover.getPriceSecondClass());
             pstmt.setDate(7, stopover.getDepartureDate());
+            pstmt.executeUpdate();
             pstmt.close();
         } catch (SQLException ex) {
             Logger.getLogger(StopoverController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public static List<Map<String, Object>> selectStopovers(List<String> fields, List<SearchCondition> searchConditions) {
+    public List<Map<String, Object>> selectStopovers(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> stopovers = new ArrayList<>();
-
-        Connection con = Database.getConnection("stopovers");
 
         String selectStatement = Utilities.formSelectStatement(fields, "stopovers", searchConditions);
 
         try {
-            PreparedStatement pstmt = con.prepareStatement(selectStatement);
+            PreparedStatement pstmt = conn.prepareStatement(selectStatement);
 
             for (int i = 0; i < searchConditions.size(); i++) {
                 if (searchConditions.get(i).getValue() instanceof Integer) {
@@ -88,14 +92,12 @@ public class StopoverController {
         return stopovers;
     }
 
-    public static void deleteStopovers(List<SearchCondition> searchConditions) {
-
-        Connection con = Database.getConnection("stopovers");
+    public void deleteStopovers(List<SearchCondition> searchConditions) {
 
         String deleteStatement = Utilities.formDeleteStatement("stopovers", searchConditions);
 
         try {
-            PreparedStatement pstmt = con.prepareStatement(deleteStatement);
+            PreparedStatement pstmt = conn.prepareStatement(deleteStatement);
 
             for (int i = 0; i < searchConditions.size(); i++) {
                 if (searchConditions.get(i).getValue() instanceof Integer) {

@@ -1,8 +1,7 @@
 package mfcc2pl.sqlutilities.controllers;
 
 import mfcc2pl.Utilities;
-import mfcc2pl.sqlutilities.dbconnection.Database;
-import mfcc2pl.utilities2pl.operations.SearchCondition;
+import mfcc2pl.sqlutilities.model.SearchCondition;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -14,15 +13,19 @@ import java.util.logging.Logger;
 
 public class CompanyController {
 
-    public static List<Map<String, Object>> selectCompanies(List<String> fields, List<SearchCondition> searchConditions) {
-        List<Map<String, Object>> companies = new ArrayList<>();
+    public Connection conn;
 
-        Connection con = Database.getConnection("companies");
+    public CompanyController(Connection conn) {
+        this.conn = conn;
+    }
+
+    public List<Map<String, Object>> selectCompanies(List<String> fields, List<SearchCondition> searchConditions) {
+        List<Map<String, Object>> companies = new ArrayList<>();
 
         String selectStatement = Utilities.formSelectStatement(fields, "companies", searchConditions);
 
         try {
-            PreparedStatement pstmt = con.prepareStatement(selectStatement);
+            PreparedStatement pstmt = conn.prepareStatement(selectStatement);
 
             for (int i = 0; i < searchConditions.size(); i++) {
                 if (searchConditions.get(i).getValue() instanceof Integer) {

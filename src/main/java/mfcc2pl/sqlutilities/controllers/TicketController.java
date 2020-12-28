@@ -1,9 +1,8 @@
 package mfcc2pl.sqlutilities.controllers;
 
 import mfcc2pl.Utilities;
-import mfcc2pl.sqlutilities.dbconnection.Database;
+import mfcc2pl.sqlutilities.model.SearchCondition;
 import mfcc2pl.sqlutilities.model.Ticket;
-import mfcc2pl.utilities2pl.operations.SearchCondition;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -15,13 +14,17 @@ import java.util.logging.Logger;
 
 public class TicketController {
 
-    public static void insertTicket(Ticket ticket) {
-        try {
-            Connection con = Database.getConnection("tickets");
+    public Connection conn;
 
+    public TicketController(Connection conn) {
+        this.conn = conn;
+    }
+
+    public void insertTicket(Ticket ticket) {
+        try {
             String insertStatement = "insert into tickets(code, price, class, passenger_id, flight_id, stopover) " +
                     "values (?, ?, ?, ?, ?, ?)";
-            PreparedStatement pstmt = con.prepareStatement(insertStatement);
+            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
             pstmt.setInt(1, ticket.getCode());
             pstmt.setInt(2, ticket.getPrice());
             pstmt.setInt(3, ticket.getSeatClass());
@@ -35,14 +38,12 @@ public class TicketController {
         }
     }
 
-    public static void deleteTickets(List<SearchCondition> searchConditions) {
-
-        Connection con = Database.getConnection("tickets");
+    public void deleteTickets(List<SearchCondition> searchConditions) {
 
         String deleteStatement = Utilities.formDeleteStatement("tickets", searchConditions);
 
         try {
-            PreparedStatement pstmt = con.prepareStatement(deleteStatement);
+            PreparedStatement pstmt = conn.prepareStatement(deleteStatement);
 
             for (int i = 0; i < searchConditions.size(); i++) {
                 if (searchConditions.get(i).getValue() instanceof Integer) {
