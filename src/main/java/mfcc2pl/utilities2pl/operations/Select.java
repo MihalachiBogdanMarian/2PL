@@ -24,8 +24,6 @@ public class Select extends AbstractOperation {
     public List<Map<String, Object>> execute(Connection conn1, Connection conn2) {
         List<Map<String, Object>> result = new ArrayList<>();
         switch (this.tableName) {
-            case "airplanes":
-                break;
             case "companies":
                 result = new CompanyController(conn2).selectCompanies(this.fields, this.searchConditions);
                 break;
@@ -35,14 +33,8 @@ public class Select extends AbstractOperation {
             case "flights":
                 result = new FlightController(conn2).selectFlights(this.fields, this.searchConditions);
                 break;
-            case "flights_cache":
-                break;
-            case "flights_staff":
-                break;
             case "stopovers":
                 result = new StopoverController(conn2).selectStopovers(this.fields, this.searchConditions);
-                break;
-            case "tickets":
                 break;
             case "users":
                 result = new UserController(conn1).selectUsers(this.fields, this.searchConditions);

@@ -57,36 +57,36 @@ public class Client {
         /* register a new flight into the database - done by an admin */
         transactions.put(4, Arrays.asList(
                 new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "dave101@user.com"), new SearchCondition("password", "=", "8GMLWPO90S"), new SearchCondition("type", "=", "admin"))),
-                new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 11))),
+                new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 101))),
                 new Insert("flights", new Flight(200, Date.valueOf("2021-01-14"), 180, 0, 2500, 1, "Dallas/Fort Worth", 15, 75, 5, 450, 800)),
                 new Insert("stopovers", new Stopover(1, 200, "Copenhagen Airport", 90, 225, 400, Date.valueOf("2021-01-14"))),
                 new Insert("flights_staff", new FlightStaff(200, 1, "pilot")),
                 new Insert("flights_staff", new FlightStaff(200, 4, "fa")),
                 new Insert("flights_staff", new FlightStaff(200, 5, "fa")),
                 new Insert("flights_staff", new FlightStaff(200, 6, "fa")),
-                new Update("users", "u", "logged", 0, Arrays.asList(new SearchCondition("id", "=", 11))),
+                new Update("users", "u", "logged", 0, Arrays.asList(new SearchCondition("id", "=", 101))),
                 new Commit()
         ));
         /* remove a successfully completed flight - done by an admin */
         transactions.put(5, Arrays.asList(
                 new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "dave101@user.com"), new SearchCondition("password", "=", "8GMLWPO90S"), new SearchCondition("type", "=", "admin"))),
-                new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 11))),
+                new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 101))),
                 new Select("flights", Arrays.asList("*"), Arrays.asList(new SearchCondition("id", "=", "200"))),
                 new Delete("stopovers", Arrays.asList(new SearchCondition("flight_id", "=", "200"))),
                 new Delete("flights_staff", Arrays.asList(new SearchCondition("flight_id", "=", "200"))),
-                new Insert("flights_cache", new FlightInDeposit(200, Date.valueOf("2021-01-14"), 180, 0, 2500, 1, "Dallas/Fort Worth", 15, 75, 5, 450, 800, "success", null)),
+                new Insert("flights_deposit", new FlightInDeposit(200, Date.valueOf("2021-01-14"), 180, 0, 2500, 1, "Dallas/Fort Worth", 15, 75, 5, 450, 800, "success", null)),
                 new Delete("flights", Arrays.asList(new SearchCondition("id", "=", "200"))),
-                new Update("users", "u", "logged", 0, Arrays.asList(new SearchCondition("id", "=", 11))),
+                new Update("users", "u", "logged", 0, Arrays.asList(new SearchCondition("id", "=", 101))),
                 new Commit()
         ));
         /* reschedule a flight - done by an admin */
         transactions.put(6, Arrays.asList(
                 new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "dave101@user.com"), new SearchCondition("password", "=", "8GMLWPO90S"), new SearchCondition("type", "=", "admin"))),
-                new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 11))),
+                new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 101))),
                 new Select("flights", Arrays.asList("*"), Arrays.asList(new SearchCondition("id", "=", "101"))),
-                new Insert("flights_cache", new FlightInDeposit(101, Date.valueOf("2021-01-18"), 180, 0, 2500, 3, "Beijing Capital International Airport", 1, 150, 80, 450, 800, "bad weather", Date.valueOf("2021-01-28"))),
+                new Insert("flights_deposit", new FlightInDeposit(101, Date.valueOf("2021-01-18"), 180, 0, 2500, 3, "Beijing Capital International Airport", 1, 150, 80, 450, 800, "bad weather", Date.valueOf("2021-01-28"))),
                 new Update("flights", "u", "departure_date", Date.valueOf("2021-01-28"), Arrays.asList(new SearchCondition("id", "=", 101))),
-                new Update("users", "u", "logged", 0, Arrays.asList(new SearchCondition("id", "=", 11))),
+                new Update("users", "u", "logged", 0, Arrays.asList(new SearchCondition("id", "=", 101))),
                 new Commit()
         ));
         /* buy a ticket */
@@ -113,10 +113,10 @@ public class Client {
         /* check the total price per flight - done by a manager */
         transactions.put(9, Arrays.asList(
                 new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "dave101@user.com"), new SearchCondition("password", "=", "8GMLWPO90S"), new SearchCondition("type", "=", "admin"))),
-                new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 11))),
+                new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 101))),
                 new Select("flights", Arrays.asList("*"), Arrays.asList()),
                 new Select("stopovers", Arrays.asList("*"), Arrays.asList()),
-                new Update("users", "u", "logged", 0, Arrays.asList(new SearchCondition("id", "=", 11))),
+                new Update("users", "u", "logged", 0, Arrays.asList(new SearchCondition("id", "=", 101))),
                 new Commit()
         ));
     }
@@ -127,14 +127,20 @@ public class Client {
         Utilities.store(transactionNumber + 1, "..\\2PL\\src\\main\\resources\\current_transaction.txt");
         Socket socket = new Socket(SERVER_ADDRESS, PORT);
 
+        // send one transaction at a time
         List<Operation> transaction = transactions.get(transactionNumber);
-        while (!transaction.isEmpty()) {
-            System.out.println("Press any key to send the next operation: ");
+        int i = 0;
+        while (i < transaction.size()) {
+            System.out.print("\nPress any key to send the next operation: \n");
             client.readFromKeyboard();
 
+            String response = client.sendOperationToServer(transaction.get(i), socket);
+            System.out.println(response);
 
+            i++;
         }
 
+        // send all transactions at once
 //        System.out.println("Press any key to start the transaction: ");
 //        client.readFromKeyboard();
 //

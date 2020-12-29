@@ -2,6 +2,7 @@ package mfcc2pl.network;
 
 import mfcc2pl.Utilities;
 import mfcc2pl.sqlutilities.dbconnection.Database;
+import mfcc2pl.utilities2pl.Transaction;
 import mfcc2pl.utilities2pl.operations.Operation;
 
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Connection;
+import java.sql.Timestamp;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,6 +21,7 @@ public class ClientThread extends Thread {
     private final Server server;
     private final Connection conn1;
     private final Connection conn2;
+    private Integer transactionId;
 
     public ClientThread(Server server, ServerSocket serverSocket, Socket clientSocket) {
         this.server = server;
@@ -26,11 +29,23 @@ public class ClientThread extends Thread {
         this.socket = clientSocket;
         conn1 = Database.getConnection(1);
         conn2 = Database.getConnection(2);
+        transactionId = -1;
     }
 
     @Override
     public void run() {
         ObjectInputStream objectInputStream = null;
+
+        Transaction transaction;
+        synchronized (server.transactionId) {
+            this.transactionId = server.transactionId;
+            transaction = new Transaction(server.transactionId, new Timestamp(System.currentTimeMillis()), "active");
+            server.transactionId++;
+        }
+        synchronized (server.transactions) {
+            server.transactions.add(transaction);
+        }
+
         try {
             while (true) {
                 objectInputStream = new ObjectInputStream(socket.getInputStream());
@@ -38,13 +53,33 @@ public class ClientThread extends Thread {
 
                 Operation operation = (Operation) objectInputStream.readObject();
 
-                operation.execute(conn1, conn2);
-                out.println("Executed " + operation);
-                out.flush();
-
                 if (operation.getName().equals("commit")) {
                     break;
                 }
+
+                Integer transactionHoldingIncompatibleLock = Utilities.getTransactionHoldingIncompatibleLock(server.locks, this.transactionId, operation);
+                if (transactionHoldingIncompatibleLock == null) {
+                    synchronized (server.locks) {
+                        Utilities.block(server.locks, server.lockId, this.transactionId, operation);
+                    }
+                    synchronized (server.lockId) {
+                        server.lockId++;
+                    }
+
+                    operation.execute(conn1, conn2);
+                    Utilities.getTransaction(server.transactions, this.transactionId).addOperation(operation);
+
+                    out.println("Executed " + operation);
+                    out.flush();
+                } else {
+                    synchronized (server.waitForGraph) {
+                        Utilities.wait(server.waitForGraph, transactionHoldingIncompatibleLock, this.transactionId, operation);
+                    }
+                }
+
+                server.displayTransactions();
+                server.displayLocks();
+                server.displayWaitForGraph();
             }
             if (server.getNrClients() > 0) {
                 server.setNrClients(server.getNrClients() - 1);

@@ -5,13 +5,13 @@ public class Lock {
     private int id;
     private String type;
     private String table;
-    private String transaction;
+    private int transactionId;
 
-    public Lock(int id, String type, String table, String transactionId) {
+    public Lock(int id, String type, String table, int transactionId) {
         this.id = id;
         this.type = type;
         this.table = table;
-        this.transaction = transactionId;
+        this.transactionId = transactionId;
     }
 
     public int getId() {
@@ -38,11 +38,21 @@ public class Lock {
         this.table = table;
     }
 
-    public String getTransaction() {
-        return transaction;
+    public int getTransactionId() {
+        return transactionId;
     }
 
-    public void setTransaction(String transaction) {
-        this.transaction = transaction;
+    public void setTransactionId(int transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    @Override
+    public String toString() {
+        return "Lock{" +
+                "id=" + id +
+                ", type='" + type + '\'' +
+                ", table='" + table + '\'' +
+                ", transactionId=" + transactionId  +
+                '}';
     }
 }

@@ -32,6 +32,12 @@ public class Delete extends AbstractOperation {
                 convertMapToObjects(this.tableName, objectsBeforeDeletion);
                 flightController.deleteFlights(searchConditions);
                 break;
+            case "flights_deposit":
+                FlightInDepositController flightInDepositController = new FlightInDepositController(conn2);
+                objectsBeforeDeletion = flightInDepositController.selectFlightsInDeposit(Arrays.asList("*"), searchConditions);
+                convertMapToObjects(this.tableName, objectsBeforeDeletion);
+                flightInDepositController.deleteFlightInDeposit(searchConditions);
+                break;
             case "flights_staff":
                 FlightStaffController flightStaffController = new FlightStaffController(conn1);
                 objectsBeforeDeletion = flightStaffController.selectFlightStaff(Arrays.asList("*"), searchConditions);

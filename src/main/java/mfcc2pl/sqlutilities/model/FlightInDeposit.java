@@ -56,7 +56,7 @@ public class FlightInDeposit implements Serializable {
 
     @Override
     public String toString() {
-        return "FlightInCache{" +
+        return "FlightInDeposit{" +
                 "id=" + id +
                 ", departureDate=" + departureDate +
                 ", duration=" + duration +

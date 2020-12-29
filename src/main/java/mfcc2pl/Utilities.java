@@ -1,8 +1,15 @@
 package mfcc2pl;
 
 import mfcc2pl.sqlutilities.model.SearchCondition;
+import mfcc2pl.utilities2pl.Lock;
+import mfcc2pl.utilities2pl.Transaction;
+import mfcc2pl.utilities2pl.WaitForGraphNode;
+import mfcc2pl.utilities2pl.operations.Operation;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 
 public class Utilities {
@@ -131,5 +138,59 @@ public class Utilities {
             e.printStackTrace();
         }
         return value;
+    }
+
+    public static Transaction getTransaction(List<Transaction> transactions, Integer id) {
+        return transactions.stream()
+                .filter(transaction -> transaction.getId() == id)
+                .findAny()
+                .orElse(null);
+    }
+
+    public static Integer getTransactionHoldingIncompatibleLock(List<Lock> locks, Integer transactionId, Operation operation) {
+        if (operation.getName().equals("select")) {
+            Lock lockToFind = locks.stream()
+                    .filter(lock -> lock.getType().equals("write")
+                            && lock.getTable().equals(operation.getTableName())
+                            && lock.getTransactionId() != transactionId)
+                    .findAny()
+                    .orElse(null);
+            if (lockToFind == null) {
+                return null;
+            } else {
+                return lockToFind.getTransactionId();
+            }
+        } else {
+            Lock lockToFind = locks.stream()
+                    .filter(lock -> lock.getTable().equals(operation.getTableName())
+                            && lock.getTransactionId() != transactionId)
+                    .findAny()
+                    .orElse(null);
+            if (lockToFind == null) {
+                return null;
+            } else {
+                return lockToFind.getTransactionId();
+            }
+        }
+    }
+
+    public static void block(List<Lock> locks, Integer lockId, Integer transactionId, Operation operation) {
+        String lockType = "";
+        if (operation.getName().equals("select")) {
+            lockType = "read";
+        } else {
+            lockType = "write";
+        }
+        locks.add(new Lock(lockId, lockType, operation.getTableName(), transactionId));
+    }
+
+    public static void wait(List<WaitForGraphNode> waitForGraphNodes, Integer transactionIdHasLock, Integer transactionIdToWait, Operation operation) {
+        String lockType = "";
+        if (operation.getName().equals("select")) {
+            lockType = "read";
+        } else {
+            lockType = "write";
+        }
+        waitForGraphNodes.add(new WaitForGraphNode(lockType, operation.getTableName(), transactionIdHasLock, transactionIdToWait));
     }
 }

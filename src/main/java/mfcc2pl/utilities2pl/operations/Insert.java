@@ -27,8 +27,8 @@ public class Insert extends AbstractOperation {
             case "flights":
                 new FlightController(conn2).insertFlight((Flight) objectToInsert);
                 break;
-            case "flights_cache":
-                new FlightInDepositController(conn1).insertFlightInCache((FlightInDeposit) objectToInsert);
+            case "flights_deposit":
+                new FlightInDepositController(conn1).insertFlightInDeposit((FlightInDeposit) objectToInsert);
                 break;
             case "flights_staff":
                 new FlightStaffController(conn1).insertFlightStaff((FlightStaff) objectToInsert);
