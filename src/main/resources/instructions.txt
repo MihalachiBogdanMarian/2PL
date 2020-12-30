@@ -1,0 +1,12 @@
+Transactions -5 -4 -3
+click 1
+click 2
+click 1
+click 1
+click 3
+click 1 -> commit
+click 2
+click 3
+click 2 -> commit
+click 3
+click 3 -> commit

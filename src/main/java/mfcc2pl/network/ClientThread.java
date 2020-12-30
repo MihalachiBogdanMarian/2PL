@@ -1,6 +1,5 @@
 package mfcc2pl.network;
 
-import mfcc2pl.Utilities;
 import mfcc2pl.sqlutilities.dbconnection.Database;
 import mfcc2pl.utilities2pl.Transaction;
 import mfcc2pl.utilities2pl.operations.Operation;
@@ -37,9 +36,9 @@ public class ClientThread extends Thread {
         ObjectInputStream objectInputStream = null;
 
         Transaction transaction;
+        this.transactionId = server.transactionId;
+        transaction = new Transaction(server.transactionId, new Timestamp(System.currentTimeMillis()), "active");
         synchronized (server.transactionId) {
-            this.transactionId = server.transactionId;
-            transaction = new Transaction(server.transactionId, new Timestamp(System.currentTimeMillis()), "active");
             server.transactionId++;
         }
         synchronized (server.transactions) {
@@ -54,16 +53,10 @@ public class ClientThread extends Thread {
                 Operation operation = (Operation) objectInputStream.readObject();
 
                 if (operation.getName().equals("commit")) {
-                    synchronized (server.locks) {
-                        synchronized (server.lockId) {
-                            synchronized (server.waitForGraph) {
-                                Utilities.releaseAndDistributeLocks(server.locks, server.lockId, server.waitForGraph, this.transactionId);
-                            }
-                        }
-                    }
-                    synchronized (server.transactions) {
-                        Utilities.setStatus(server.transactions, this.transactionId, "committed");
-                    }
+                    server.releaseAndDistributeLocks(this.transactionId);
+
+                    server.setStatus(this.transactionId, "committed");
+                    server.getTransaction(this.transactionId).addOperation(operation);
 
                     out.println("Commited");
                     out.flush();
@@ -71,41 +64,45 @@ public class ClientThread extends Thread {
                     break;
                 }
 
-                Integer transactionHoldingIncompatibleLock = Utilities.getTransactionHoldingIncompatibleLock(server.locks, this.transactionId, operation);
+                Integer transactionHoldingIncompatibleLock = server.getTransactionHoldingIncompatibleLock(operation);
                 if (transactionHoldingIncompatibleLock == null) { // no incompatible lock
-                    synchronized (server.locks) { // acquire the lock
-                        Utilities.block(server.locks, server.lockId, this.transactionId, operation);
-                    }
+                    // acquire the lock
+                    server.block(this.transactionId, operation);
+
                     synchronized (server.lockId) {
                         server.lockId++;
                     }
 
                     operation.execute(conn1, conn2);
-                    Utilities.getTransaction(server.transactions, this.transactionId).addOperation(operation);
+                    server.getTransaction(this.transactionId).addOperation(operation);
 
                     out.println("Executed " + operation);
                     out.flush();
-                } else { // the is an incompatible lock
+
+                    server.displayManagementEntities(this.transactionId);
+                } else { // there is an incompatible lock
                     if (transactionHoldingIncompatibleLock == this.transactionId) { // if it is my write lock
                         // if select and I own only the write lock, I will acquire also the read lock on that table
-                        if (operation.getName().equals("select") && !Utilities.hasLock(server.locks, "read", this.transactionId, operation.getTableName())) {
-                            synchronized (server.locks) {
-                                Utilities.block(server.locks, server.lockId, this.transactionId, operation);
-                            }
+                        if (operation.getName().equals("select") && !server.hasLock("read", this.transactionId, operation.getTableName())) {
+
+                            server.block(this.transactionId, operation);
+
                             synchronized (server.lockId) {
                                 server.lockId++;
                             }
                         }
 
                         operation.execute(conn1, conn2);
-                        Utilities.getTransaction(server.transactions, this.transactionId).addOperation(operation);
+                        server.getTransaction(this.transactionId).addOperation(operation);
 
                         out.println("Executed " + operation);
                         out.flush();
+
+                        server.displayManagementEntities(this.transactionId);
                     } else { // someone else has the incompatible lock, so I have to wait
-                        synchronized (server.waitForGraph) {
-                            Utilities.wait(server.waitForGraph, transactionHoldingIncompatibleLock, this.transactionId, operation);
-                        }
+
+                        server.wait(transactionHoldingIncompatibleLock, this.transactionId, operation);
+
                         String lockType = "";
                         if (operation.getName().equals("select")) {
                             lockType = "read";
@@ -116,14 +113,15 @@ public class ClientThread extends Thread {
                         out.println("Wait");
                         out.flush();
 
-                        server.displayManagementEntities();
+                        server.displayManagementEntities(this.transactionId);
 
+                        int waitingStatus;
                         while (true) {
-                            synchronized (server.locks) {
-                                if (!Utilities.isWaiting(server.locks, transactionId, lockType, operation.getTableName())) {
-                                    break;
-                                }
+                            waitingStatus = server.isWaiting(transactionId, lockType, operation.getTableName());
+                            if (waitingStatus == 0 || waitingStatus == 2) {
+                                break;
                             }
+
                             try {
                                 Thread.sleep(1000);
                             } catch (InterruptedException e) {
@@ -131,26 +129,31 @@ public class ClientThread extends Thread {
                             }
                         }
 
-                        operation.execute(conn1, conn2);
-                        Utilities.getTransaction(server.transactions, this.transactionId).addOperation(operation);
+                        if (waitingStatus == 2) { // continue execution
+                            operation.execute(conn1, conn2);
+                            server.getTransaction(this.transactionId).addOperation(operation);
 
-                        server.displayManagementEntities();
+                            server.displayManagementEntities(this.transactionId);
 
-                        out.println("Executed " + operation);
-                        out.flush();
+                            out.println("Executed " + operation);
+                            out.flush();
+                        } else {
+                            out.println("Aborted at " + operation);
+                            out.flush();
+
+                            break;
+                        }
                     }
 
                 }
-
-                server.displayManagementEntities();
             }
 
-            server.displayManagementEntities();
+            server.displayManagementEntities(this.transactionId);
 
             if (server.getNrClients() > 0) {
                 server.setNrClients(server.getNrClients() - 1);
-                int transactionNumber = Utilities.retrieve("..\\2PL\\src\\main\\resources\\current_transaction.txt");
-                Utilities.store(transactionNumber - 1, "..\\2PL\\src\\main\\resources\\current_transaction.txt");
+//                int transactionNumber = Utilities.retrieve("..\\2PL\\src\\main\\resources\\current_transaction.txt");
+//                Utilities.store(transactionNumber - 1, "..\\2PL\\src\\main\\resources\\current_transaction.txt");
                 socket.close();
             }
         } catch (IOException | ClassNotFoundException ex) {

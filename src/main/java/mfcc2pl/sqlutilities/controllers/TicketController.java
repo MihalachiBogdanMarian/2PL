@@ -20,24 +20,6 @@ public class TicketController {
         this.conn = conn;
     }
 
-    public void insertTicket(Ticket ticket) {
-        try {
-            String insertStatement = "insert into tickets(code, price, class, passenger_id, flight_id, stopover) " +
-                    "values (?, ?, ?, ?, ?, ?)";
-            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
-            pstmt.setInt(1, ticket.getCode());
-            pstmt.setInt(2, ticket.getPrice());
-            pstmt.setInt(3, ticket.getSeatClass());
-            pstmt.setInt(4, ticket.getPassengerId());
-            pstmt.setInt(5, ticket.getFlightId());
-            pstmt.setInt(6, ticket.getStopover());
-            pstmt.executeUpdate();
-            pstmt.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(TicketController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
     public List<Map<String, Object>> selectTickets(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> tickets = new ArrayList<>();
 
@@ -78,14 +60,70 @@ public class TicketController {
             pstmt.executeUpdate();
             pstmt.close();
         } catch (SQLException ex) {
-            Logger.getLogger(FlightController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(TicketController.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return tickets;
     }
 
-    public void deleteTickets(List<SearchCondition> searchConditions) {
+    public void insertTicket(Ticket ticket) {
+        try {
+            String insertStatement = "insert into tickets(code, price, class, passenger_id, flight_id, stopover) " +
+                    "values (?, ?, ?, ?, ?, ?)";
+            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
+            pstmt.setInt(1, ticket.getCode());
+            pstmt.setInt(2, ticket.getPrice());
+            pstmt.setInt(3, ticket.getSeatClass());
+            pstmt.setInt(4, ticket.getPassengerId());
+            pstmt.setInt(5, ticket.getFlightId());
+            pstmt.setInt(6, ticket.getStopover());
+            pstmt.executeUpdate();
+            pstmt.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(TicketController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
+    public void updateTickets(String updateType, String fieldName, Object fieldValue, List<SearchCondition> searchConditions) {
+        String updateStatement;
+        if (updateType.equals("u")) {
+            updateStatement = Utilities.formUpdateStatement("tickets", fieldName, searchConditions);
+        } else if (updateType.equals("i")) {
+            updateStatement = Utilities.formUpdateStatementIncrement("tickets", fieldName, searchConditions);
+        } else if (updateType.equals("d")) {
+            updateStatement = Utilities.formUpdateStatementDecrement("tickets", fieldName, searchConditions);
+        } else {
+            updateStatement = Utilities.formUpdateStatement("tickets", fieldName, searchConditions);
+        }
+
+        try {
+            PreparedStatement pstmt = conn.prepareStatement(updateStatement);
+            if (fieldValue instanceof Integer) {
+                pstmt.setInt(1, (Integer) fieldValue);
+            } else if (fieldValue instanceof Date) {
+                pstmt.setDate(1, (Date) fieldValue);
+            } else if (fieldValue instanceof String) {
+                pstmt.setString(1, fieldValue.toString());
+            }
+
+            for (int i = 0; i < searchConditions.size(); i++) {
+                if (searchConditions.get(i).getValue() instanceof Integer) {
+                    pstmt.setInt(i + 2, (Integer) searchConditions.get(i).getValue());
+                } else if (searchConditions.get(i).getValue() instanceof Date) {
+                    pstmt.setDate(i + 2, (Date) searchConditions.get(i).getValue());
+                } else if (searchConditions.get(i).getValue() instanceof String) {
+                    pstmt.setString(i + 2, searchConditions.get(i).getValue().toString());
+                }
+            }
+
+            pstmt.executeUpdate();
+            pstmt.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(TicketController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void deleteTickets(List<SearchCondition> searchConditions) {
         String deleteStatement = Utilities.formDeleteStatement("tickets", searchConditions);
 
         try {

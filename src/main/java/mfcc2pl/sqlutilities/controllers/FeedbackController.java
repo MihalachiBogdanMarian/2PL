@@ -20,21 +20,6 @@ public class FeedbackController {
         this.conn = conn;
     }
 
-    public void insertFeedback(Feedback feedback) {
-        try {
-            String insertStatement = "insert into feedback(user_id, company_id, message) " +
-                    "values (?, ?, ?)";
-            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
-            pstmt.setInt(1, feedback.getUserId());
-            pstmt.setInt(2, feedback.getCompanyId());
-            pstmt.setString(3, feedback.getMessage());
-            pstmt.executeUpdate();
-            pstmt.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(FeedbackController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
     public List<Map<String, Object>> selectFeedback(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> feedbackList = new ArrayList<>();
 
@@ -80,5 +65,20 @@ public class FeedbackController {
         }
 
         return feedbackList;
+    }
+
+    public void insertFeedback(Feedback feedback) {
+        try {
+            String insertStatement = "insert into feedback(user_id, company_id, message) " +
+                    "values (?, ?, ?)";
+            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
+            pstmt.setInt(1, feedback.getUserId());
+            pstmt.setInt(2, feedback.getCompanyId());
+            pstmt.setString(3, feedback.getMessage());
+            pstmt.executeUpdate();
+            pstmt.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(FeedbackController.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }

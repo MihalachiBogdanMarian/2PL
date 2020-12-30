@@ -1,6 +1,5 @@
 package mfcc2pl.network;
 
-import mfcc2pl.Utilities;
 import mfcc2pl.sqlutilities.model.*;
 import mfcc2pl.utilities2pl.operations.*;
 
@@ -18,15 +17,30 @@ public class Client {
     private final static Map<Integer, List<Operation>> transactions = new HashMap<>();
 
     public Client() {
+        // multiple only read locks
+        transactions.put(-10, Arrays.asList(
+                new Select("users", Arrays.asList("*"), Arrays.asList()),
+                new Commit()
+        ));
+        transactions.put(-9, Arrays.asList(
+                new Select("users", Arrays.asList("*"), Arrays.asList()),
+                new Commit()
+        ));
+        transactions.put(-8, Arrays.asList(
+                new Select("users", Arrays.asList("*"), Arrays.asList()),
+                new Commit()
+        ));
+
+
         // deadlock test
         transactions.put(-7, Arrays.asList(
                 new Select("users", Arrays.asList("*"), Arrays.asList()),
-                new Update("flights", "u", "duration", 1000, Arrays.asList(new SearchCondition("id", "=", "20"))),
+                new Update("flights", "u", "duration", 1000, Arrays.asList(new SearchCondition("id", "=", "15"))),
                 new Commit()
         ));
         transactions.put(-6, Arrays.asList(
-                new Update("flights", "u", "duration", 2000, Arrays.asList(new SearchCondition("id", "=", "20"))),
-                new Update("users", "u", "duration", 2000, Arrays.asList(new SearchCondition("id", "=", "20"))),
+                new Update("flights", "u", "duration", 2000, Arrays.asList(new SearchCondition("id", "=", "15"))),
+                new Update("users", "u", "duration", 2000, Arrays.asList(new SearchCondition("id", "=", "15"))),
                 new Commit()
         ));
 
@@ -39,7 +53,7 @@ public class Client {
         ));
         transactions.put(-4, Arrays.asList(
                 new Select("users", Arrays.asList("*"), Arrays.asList()),
-                new Update("flights", "i", "duration", "duration", Arrays.asList(new SearchCondition("id", "=", "10"))),
+                new Update("flights", "i", "duration", 2, Arrays.asList(new SearchCondition("id", "=", "10"))),
                 new Commit()
         ));
         transactions.put(-3, Arrays.asList(
@@ -68,12 +82,12 @@ public class Client {
                 new Commit()
         ));
         /* log out user */
-        transactions.put(2, Arrays.asList(
+        transactions.put(1, Arrays.asList(
                 new Update("users", "u", "logged", 0, Arrays.asList(new SearchCondition("id", "=", 100))),
                 new Commit()
         ));
         /* post feedback to a company following a flight */
-        transactions.put(1, Arrays.asList(
+        transactions.put(2, Arrays.asList(
                 new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "john1@user.com"), new SearchCondition("password", "=", "8DHW6LC20O"))),
                 new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 100))),
                 new Select("companies", Arrays.asList("id"), Arrays.asList(new SearchCondition("name", "=", "SWISS"))),
@@ -156,8 +170,10 @@ public class Client {
 
     public static void main(String[] args) throws IOException {
         Client client = new Client();
-        int transactionNumber = Utilities.retrieve("..\\2PL\\src\\main\\resources\\current_transaction.txt");
-        Utilities.store(transactionNumber + 1, "..\\2PL\\src\\main\\resources\\current_transaction.txt");
+//        int transactionNumber = Utilities.retrieve("..\\2PL\\src\\main\\resources\\current_transaction.txt");
+//        Utilities.store(transactionNumber + 1, "..\\2PL\\src\\main\\resources\\current_transaction.txt");
+        System.out.print("\nTransaction number: \n");
+        int transactionNumber = Integer.parseInt(client.readFromKeyboard());
         Socket socket = new Socket(SERVER_ADDRESS, PORT);
 
         // send one transaction at a time
@@ -172,11 +188,12 @@ public class Client {
 
             if (response.equals("Wait")) {
                 System.out.println("I have to wait now!");
+                System.out.println();
 
                 String unblockOrAbortResponse = client.waitResponseFromServer(socket);
                 System.out.println(unblockOrAbortResponse);
 
-                if (unblockOrAbortResponse.equals("Aborted")) {
+                if (unblockOrAbortResponse.startsWith("Aborted")) {
                     break;
                 } else {
 

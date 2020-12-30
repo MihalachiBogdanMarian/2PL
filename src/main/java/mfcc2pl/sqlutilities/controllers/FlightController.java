@@ -20,30 +20,6 @@ public class FlightController {
         this.conn = conn;
     }
 
-    public void insertFlight(Flight flight) {
-        try {
-            String insertStatement = "insert into flights(id, departure_date, duration, delay, distance, stopovers, airport_name, airplane_id, first_class_seats, second_class_seats, first_class_price, second_class_price) " +
-                    "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
-            pstmt.setInt(1, flight.getId());
-            pstmt.setDate(2, flight.getDepartureDate());
-            pstmt.setInt(3, flight.getDuration());
-            pstmt.setInt(4, flight.getDelay());
-            pstmt.setInt(5, flight.getDistance());
-            pstmt.setInt(6, flight.getStopovers());
-            pstmt.setString(7, flight.getAirportName());
-            pstmt.setInt(8, flight.getAirplaneId());
-            pstmt.setInt(9, flight.getFirstClassSeats());
-            pstmt.setInt(10, flight.getSecondClassSeats());
-            pstmt.setInt(11, flight.getFirstClassPrice());
-            pstmt.setInt(12, flight.getSecondClassPrice());
-            pstmt.executeUpdate();
-            pstmt.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(FlightController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
     public List<Map<String, Object>> selectFlights(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> flights = new ArrayList<>();
 
@@ -102,8 +78,31 @@ public class FlightController {
         return flights;
     }
 
-    public void updateFlights(String updateType, String fieldName, Object fieldValue, List<SearchCondition> searchConditions) {
+    public void insertFlight(Flight flight) {
+        try {
+            String insertStatement = "insert into flights(id, departure_date, duration, delay, distance, stopovers, airport_name, airplane_id, first_class_seats, second_class_seats, first_class_price, second_class_price) " +
+                    "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
+            pstmt.setInt(1, flight.getId());
+            pstmt.setDate(2, flight.getDepartureDate());
+            pstmt.setInt(3, flight.getDuration());
+            pstmt.setInt(4, flight.getDelay());
+            pstmt.setInt(5, flight.getDistance());
+            pstmt.setInt(6, flight.getStopovers());
+            pstmt.setString(7, flight.getAirportName());
+            pstmt.setInt(8, flight.getAirplaneId());
+            pstmt.setInt(9, flight.getFirstClassSeats());
+            pstmt.setInt(10, flight.getSecondClassSeats());
+            pstmt.setInt(11, flight.getFirstClassPrice());
+            pstmt.setInt(12, flight.getSecondClassPrice());
+            pstmt.executeUpdate();
+            pstmt.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(FlightController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
+    public void updateFlights(String updateType, String fieldName, Object fieldValue, List<SearchCondition> searchConditions) {
         String updateStatement;
         if (updateType.equals("u")) {
             updateStatement = Utilities.formUpdateStatement("flights", fieldName, searchConditions);
@@ -155,7 +154,6 @@ public class FlightController {
     }
 
     public void deleteFlights(List<SearchCondition> searchConditions) {
-
         String deleteStatement = Utilities.formDeleteStatement("flights", searchConditions);
 
         try {

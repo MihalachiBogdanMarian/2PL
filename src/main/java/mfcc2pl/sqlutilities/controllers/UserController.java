@@ -20,29 +20,6 @@ public class UserController {
         this.conn = conn;
     }
 
-    public void insertUser(User user) {
-        String insertStatement = "insert into users " +
-                "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-        try {
-            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
-            pstmt.setInt(1, user.getId());
-            pstmt.setString(2, user.getFirstName());
-            pstmt.setString(3, user.getLastName());
-            pstmt.setDate(4, user.getBirthday());
-            pstmt.setString(5, user.getAddress());
-            pstmt.setString(6, user.getPhoneNumber());
-            pstmt.setString(7, user.getEmail());
-            pstmt.setString(8, user.getPassword());
-            pstmt.setString(9, user.getType());
-            pstmt.setInt(10, user.getLogged());
-            pstmt.executeUpdate();
-            pstmt.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(UserController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
     public List<Map<String, Object>> selectUsers(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> users = new ArrayList<>();
 
@@ -99,8 +76,30 @@ public class UserController {
         return users;
     }
 
-    public void updateUsers(String updateType, String fieldName, Object fieldValue, List<SearchCondition> searchConditions) {
+    public void insertUser(User user) {
+        String insertStatement = "insert into users " +
+                "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
+        try {
+            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
+            pstmt.setInt(1, user.getId());
+            pstmt.setString(2, user.getFirstName());
+            pstmt.setString(3, user.getLastName());
+            pstmt.setDate(4, user.getBirthday());
+            pstmt.setString(5, user.getAddress());
+            pstmt.setString(6, user.getPhoneNumber());
+            pstmt.setString(7, user.getEmail());
+            pstmt.setString(8, user.getPassword());
+            pstmt.setString(9, user.getType());
+            pstmt.setInt(10, user.getLogged());
+            pstmt.executeUpdate();
+            pstmt.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(UserController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void updateUsers(String updateType, String fieldName, Object fieldValue, List<SearchCondition> searchConditions) {
         String updateStatement;
         if (updateType.equals("u")) {
             updateStatement = Utilities.formUpdateStatement("users", fieldName, searchConditions);
@@ -140,7 +139,6 @@ public class UserController {
     }
 
     public void deleteUsers(List<SearchCondition> searchConditions) {
-
         String deleteStatement = Utilities.formDeleteStatement("users", searchConditions);
 
         try {

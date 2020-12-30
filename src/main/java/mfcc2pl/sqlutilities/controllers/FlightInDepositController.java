@@ -20,36 +20,6 @@ public class FlightInDepositController {
         this.conn = conn;
     }
 
-    public void insertFlightInDeposit(FlightInDeposit flightInDeposit) {
-        try {
-            String insertStatement = "insert into flights_deposit(flight_id, departure_date, duration, delay, distance, stopovers, airport_name, airplane_id, first_class_seats, second_class_seats, first_class_price, second_class_price, reason, rescheduled) " +
-                    "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
-            pstmt.setInt(1, flightInDeposit.getId());
-            pstmt.setDate(2, flightInDeposit.getDepartureDate());
-            pstmt.setInt(3, flightInDeposit.getDuration());
-            pstmt.setInt(4, flightInDeposit.getDelay());
-            pstmt.setInt(5, flightInDeposit.getDistance());
-            pstmt.setInt(6, flightInDeposit.getStopovers());
-            pstmt.setString(7, flightInDeposit.getAirportName());
-            pstmt.setInt(8, flightInDeposit.getAirplaneId());
-            pstmt.setInt(9, flightInDeposit.getFirstClassSeats());
-            pstmt.setInt(10, flightInDeposit.getSecondClassSeats());
-            pstmt.setInt(11, flightInDeposit.getFirstClassPrice());
-            pstmt.setInt(12, flightInDeposit.getSecondClassPrice());
-            pstmt.setString(13, flightInDeposit.getReason());
-            if (flightInDeposit.getRescheduled() == null) {
-                pstmt.setNull(14, Types.NULL);
-            } else {
-                pstmt.setDate(14, flightInDeposit.getRescheduled());
-            }
-            pstmt.executeUpdate();
-            pstmt.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(FlightInDepositController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
     public List<Map<String, Object>> selectFlightsInDeposit(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> flightsInDeposit = new ArrayList<>();
 
@@ -104,14 +74,43 @@ public class FlightInDepositController {
             pstmt.executeUpdate();
             pstmt.close();
         } catch (SQLException ex) {
-            Logger.getLogger(FlightController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(FlightInDepositController.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return flightsInDeposit;
     }
 
-    public void deleteFlightInDeposit(List<SearchCondition> searchConditions) {
+    public void insertFlightInDeposit(FlightInDeposit flightInDeposit) {
+        try {
+            String insertStatement = "insert into flights_deposit(flight_id, departure_date, duration, delay, distance, stopovers, airport_name, airplane_id, first_class_seats, second_class_seats, first_class_price, second_class_price, reason, rescheduled) " +
+                    "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
+            pstmt.setInt(1, flightInDeposit.getId());
+            pstmt.setDate(2, flightInDeposit.getDepartureDate());
+            pstmt.setInt(3, flightInDeposit.getDuration());
+            pstmt.setInt(4, flightInDeposit.getDelay());
+            pstmt.setInt(5, flightInDeposit.getDistance());
+            pstmt.setInt(6, flightInDeposit.getStopovers());
+            pstmt.setString(7, flightInDeposit.getAirportName());
+            pstmt.setInt(8, flightInDeposit.getAirplaneId());
+            pstmt.setInt(9, flightInDeposit.getFirstClassSeats());
+            pstmt.setInt(10, flightInDeposit.getSecondClassSeats());
+            pstmt.setInt(11, flightInDeposit.getFirstClassPrice());
+            pstmt.setInt(12, flightInDeposit.getSecondClassPrice());
+            pstmt.setString(13, flightInDeposit.getReason());
+            if (flightInDeposit.getRescheduled() == null) {
+                pstmt.setNull(14, Types.NULL);
+            } else {
+                pstmt.setDate(14, flightInDeposit.getRescheduled());
+            }
+            pstmt.executeUpdate();
+            pstmt.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(FlightInDepositController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
+    public void deleteFlightInDeposit(List<SearchCondition> searchConditions) {
         String deleteStatement = Utilities.formDeleteStatement("flights_deposit", searchConditions);
 
         try {
@@ -130,7 +129,7 @@ public class FlightInDepositController {
             pstmt.executeUpdate();
             pstmt.close();
         } catch (SQLException ex) {
-            Logger.getLogger(FlightStaffController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(FlightInDepositController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }

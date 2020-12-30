@@ -52,7 +52,7 @@ public class Lock {
                 "id=" + id +
                 ", type='" + type + '\'' +
                 ", table='" + table + '\'' +
-                ", transactionId=" + transactionId  +
+                ", transactionId=" + transactionId +
                 '}';
     }
 }

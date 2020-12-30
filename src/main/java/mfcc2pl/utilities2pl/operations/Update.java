@@ -1,6 +1,7 @@
 package mfcc2pl.utilities2pl.operations;
 
 import mfcc2pl.sqlutilities.controllers.FlightController;
+import mfcc2pl.sqlutilities.controllers.TicketController;
 import mfcc2pl.sqlutilities.controllers.UserController;
 import mfcc2pl.sqlutilities.model.SearchCondition;
 
@@ -41,6 +42,11 @@ public class Update extends AbstractOperation {
                     fieldValueBeforeUpdate = (Integer) flightController.selectFlights(Arrays.asList(fieldName), searchConditions).get(0).get(fieldName);
                 }
                 flightController.updateFlights(updateType, fieldName, fieldValue, searchConditions);
+                break;
+            case "tickets":
+                TicketController ticketController = new TicketController(conn1);
+                fieldValueBeforeUpdate = (Integer) ticketController.selectTickets(Arrays.asList(fieldName), searchConditions).get(0).get(fieldName);
+                ticketController.updateTickets(updateType, fieldName, fieldValue, searchConditions);
                 break;
             case "users":
                 UserController userController = new UserController(conn1);

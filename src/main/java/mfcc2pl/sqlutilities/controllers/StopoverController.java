@@ -20,27 +20,6 @@ public class StopoverController {
         this.conn = conn;
     }
 
-
-
-    public void insertStopover(Stopover stopover) {
-        try {
-            String insertStatement = "insert into stopovers(stop_number, flight_id, airport_name, time, price_first_class, price_second_class, departure_date) " +
-                    "values (?, ?, ?, ?, ?, ?, ?)";
-            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
-            pstmt.setInt(1, stopover.getStopNumber());
-            pstmt.setInt(2, stopover.getFlightId());
-            pstmt.setString(3, stopover.getAirportName());
-            pstmt.setInt(4, stopover.getTime());
-            pstmt.setInt(5, stopover.getPriceFirstClass());
-            pstmt.setInt(6, stopover.getPriceSecondClass());
-            pstmt.setDate(7, stopover.getDepartureDate());
-            pstmt.executeUpdate();
-            pstmt.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(StopoverController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
     public List<Map<String, Object>> selectStopovers(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> stopovers = new ArrayList<>();
 
@@ -94,8 +73,26 @@ public class StopoverController {
         return stopovers;
     }
 
-    public void deleteStopovers(List<SearchCondition> searchConditions) {
+    public void insertStopover(Stopover stopover) {
+        try {
+            String insertStatement = "insert into stopovers(stop_number, flight_id, airport_name, time, price_first_class, price_second_class, departure_date) " +
+                    "values (?, ?, ?, ?, ?, ?, ?)";
+            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
+            pstmt.setInt(1, stopover.getStopNumber());
+            pstmt.setInt(2, stopover.getFlightId());
+            pstmt.setString(3, stopover.getAirportName());
+            pstmt.setInt(4, stopover.getTime());
+            pstmt.setInt(5, stopover.getPriceFirstClass());
+            pstmt.setInt(6, stopover.getPriceSecondClass());
+            pstmt.setDate(7, stopover.getDepartureDate());
+            pstmt.executeUpdate();
+            pstmt.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(StopoverController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
+    public void deleteStopovers(List<SearchCondition> searchConditions) {
         String deleteStatement = Utilities.formDeleteStatement("stopovers", searchConditions);
 
         try {

@@ -20,21 +20,6 @@ public class FlightStaffController {
         this.conn = conn;
     }
 
-    public void insertFlightStaff(FlightStaff flightStaff) {
-        try {
-            String insertStatement = "insert into flights_staff(flight_id, user_id, user_type) " +
-                    "values (?, ?, ?)";
-            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
-            pstmt.setInt(1, flightStaff.getFlightId());
-            pstmt.setInt(2, flightStaff.getUserId());
-            pstmt.setString(3, flightStaff.getUserType());
-            pstmt.executeUpdate();
-            pstmt.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(FlightStaffController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
     public List<Map<String, Object>> selectFlightStaff(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> flightStaff = new ArrayList<>();
 
@@ -76,14 +61,28 @@ public class FlightStaffController {
             pstmt.executeUpdate();
             pstmt.close();
         } catch (SQLException ex) {
-            Logger.getLogger(StopoverController.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(FlightStaffController.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return flightStaff;
     }
 
-    public void deleteFlightStaff(List<SearchCondition> searchConditions) {
+    public void insertFlightStaff(FlightStaff flightStaff) {
+        try {
+            String insertStatement = "insert into flights_staff(flight_id, user_id, user_type) " +
+                    "values (?, ?, ?)";
+            PreparedStatement pstmt = conn.prepareStatement(insertStatement);
+            pstmt.setInt(1, flightStaff.getFlightId());
+            pstmt.setInt(2, flightStaff.getUserId());
+            pstmt.setString(3, flightStaff.getUserType());
+            pstmt.executeUpdate();
+            pstmt.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(FlightStaffController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
+    public void deleteFlightStaff(List<SearchCondition> searchConditions) {
         String deleteStatement = Utilities.formDeleteStatement("flights_staff", searchConditions);
 
         try {
