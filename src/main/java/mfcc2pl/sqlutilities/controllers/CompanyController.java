@@ -27,29 +27,19 @@ public class CompanyController {
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
-                }
-            }
+            ControllerUtilities.preparedSelectOrDeleteStatementSetParameters(pstmt, searchConditions);
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
+                Map<String, Object> company = new HashMap<>();
                 if (fields.size() == 1 && fields.get(0).equals("*")) {
-                    Map<String, Object> company = new HashMap<>();
                     company.put("id", rs.getInt("id"));
                     company.put("name", rs.getString("name"));
                     company.put("address", rs.getString("address"));
                     company.put("city", rs.getString("city"));
                     company.put("phone_number", rs.getString("phone_number"));
                     company.put("email", rs.getString("email"));
-                    companies.add(company);
                 } else {
-                    Map<String, Object> company = new HashMap<>();
                     for (String field : fields) {
                         if (field.equals("id")) {
                             company.put(field, rs.getInt(field));
@@ -57,8 +47,8 @@ public class CompanyController {
                             company.put(field, rs.getString(field));
                         }
                     }
-                    companies.add(company);
                 }
+                companies.add(company);
             }
             pstmt.executeUpdate();
             pstmt.close();

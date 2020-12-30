@@ -28,20 +28,12 @@ public class UserController {
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
-                }
-            }
+            ControllerUtilities.preparedSelectOrDeleteStatementSetParameters(pstmt, searchConditions);
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
+                Map<String, Object> user = new HashMap<>();
                 if (fields.size() == 1 && fields.get(0).equals("*")) {
-                    Map<String, Object> user = new HashMap<>();
                     user.put("id", rs.getInt("id"));
                     user.put("first_name", rs.getString("first_name"));
                     user.put("last_name", rs.getString("last_name"));
@@ -52,9 +44,7 @@ public class UserController {
                     user.put("password", rs.getString("password"));
                     user.put("type", rs.getString("type"));
                     user.put("logged", rs.getInt("logged"));
-                    users.add(user);
                 } else {
-                    Map<String, Object> user = new HashMap<>();
                     for (String field : fields) {
                         if (field.equals("id") || field.equals("logged")) {
                             user.put(field, rs.getInt(field));
@@ -64,8 +54,8 @@ public class UserController {
                             user.put(field, rs.getString(field));
                         }
                     }
-                    users.add(user);
                 }
+                users.add(user);
             }
             pstmt.execute();
             pstmt.close();
@@ -94,6 +84,9 @@ public class UserController {
             pstmt.setInt(10, user.getLogged());
             pstmt.executeUpdate();
             pstmt.close();
+
+            // make a refresh of the materialized view referred in the other database
+            ControllerUtilities.refreshMaterializedView("user_ids");
         } catch (SQLException ex) {
             Logger.getLogger(UserController.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -101,38 +94,30 @@ public class UserController {
 
     public void updateUsers(String updateType, String fieldName, Object fieldValue, List<SearchCondition> searchConditions) {
         String updateStatement;
-        if (updateType.equals("u")) {
-            updateStatement = Utilities.formUpdateStatement("users", fieldName, searchConditions);
-        } else if (updateType.equals("i")) {
-            updateStatement = Utilities.formUpdateStatementIncrement("users", fieldName, searchConditions);
-        } else if (updateType.equals("d")) {
-            updateStatement = Utilities.formUpdateStatementDecrement("users", fieldName, searchConditions);
-        } else {
-            updateStatement = Utilities.formUpdateStatement("users", fieldName, searchConditions);
+        switch (updateType) {
+            case "i":
+                updateStatement = Utilities.formUpdateStatementIncrement("users", fieldName, searchConditions);
+                break;
+            case "d":
+                updateStatement = Utilities.formUpdateStatementDecrement("users", fieldName, searchConditions);
+                break;
+            default:
+                updateStatement = Utilities.formUpdateStatement("users", fieldName, searchConditions);
+                break;
         }
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(updateStatement);
-            if (fieldValue instanceof Integer) {
-                pstmt.setInt(1, (Integer) fieldValue);
-            } else if (fieldValue instanceof Date) {
-                pstmt.setDate(1, (Date) fieldValue);
-            } else if (fieldValue instanceof String) {
-                pstmt.setString(1, fieldValue.toString());
-            }
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 2, (Integer) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 2, (Date) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 2, searchConditions.get(i).getValue().toString());
-                }
-            }
+            ControllerUtilities.preparedUpdateStatementSetParameters(pstmt, updateType, fieldValue, searchConditions);
 
             pstmt.executeUpdate();
             pstmt.close();
+
+            if (fieldName.equals("id")) {
+                // make a refresh of the materialized view referred in the other database
+                ControllerUtilities.refreshMaterializedView("user_ids");
+            }
         } catch (SQLException ex) {
             Logger.getLogger(UserController.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -144,18 +129,13 @@ public class UserController {
         try {
             PreparedStatement pstmt = conn.prepareStatement(deleteStatement);
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
-                }
-            }
+            ControllerUtilities.preparedSelectOrDeleteStatementSetParameters(pstmt, searchConditions);
 
             pstmt.executeUpdate();
             pstmt.close();
+
+            // make a refresh of the materialized view referred in the other database
+            ControllerUtilities.refreshMaterializedView("user_ids");
         } catch (SQLException ex) {
             Logger.getLogger(UserController.class.getName()).log(Level.SEVERE, null, ex);
         }

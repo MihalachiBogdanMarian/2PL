@@ -28,20 +28,12 @@ public class StopoverController {
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
-                }
-            }
+            ControllerUtilities.preparedSelectOrDeleteStatementSetParameters(pstmt, searchConditions);
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
+                Map<String, Object> stopover = new HashMap<>();
                 if (fields.size() == 1 && fields.get(0).equals("*")) {
-                    Map<String, Object> stopover = new HashMap<>();
                     stopover.put("stop_number", rs.getInt("stop_number"));
                     stopover.put("flight_id", rs.getInt("flight_id"));
                     stopover.put("airport_name", rs.getString("airport_name"));
@@ -49,20 +41,10 @@ public class StopoverController {
                     stopover.put("price_first_class", rs.getInt("price_first_class"));
                     stopover.put("price_second_class", rs.getInt("price_second_class"));
                     stopover.put("departure_date", rs.getDate("departure_date"));
-                    stopovers.add(stopover);
                 } else {
-                    Map<String, Object> stopover = new HashMap<>();
-                    for (String field : fields) {
-                        if (field.equals("airport_name")) {
-                            stopover.put(field, rs.getString(field));
-                        } else if (field.equals("departure_date")) {
-                            stopover.put(field, rs.getDate(field));
-                        } else {
-                            stopover.put(field, rs.getInt(field));
-                        }
-                    }
-                    stopovers.add(stopover);
+                    FlightController.addSomeFlightAttributesForSelect(rs, stopover, fields);
                 }
+                stopovers.add(stopover);
             }
             pstmt.executeUpdate();
             pstmt.close();
@@ -98,15 +80,7 @@ public class StopoverController {
         try {
             PreparedStatement pstmt = conn.prepareStatement(deleteStatement);
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
-                }
-            }
+            ControllerUtilities.preparedSelectOrDeleteStatementSetParameters(pstmt, searchConditions);
 
             pstmt.executeUpdate();
             pstmt.close();

@@ -28,26 +28,16 @@ public class FlightStaffController {
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
-                }
-            }
+            ControllerUtilities.preparedSelectOrDeleteStatementSetParameters(pstmt, searchConditions);
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
+                Map<String, Object> flightWorker = new HashMap<>();
                 if (fields.size() == 1 && fields.get(0).equals("*")) {
-                    Map<String, Object> flightWorker = new HashMap<>();
                     flightWorker.put("flight_id", rs.getInt("flight_id"));
                     flightWorker.put("user_id", rs.getInt("user_id"));
                     flightWorker.put("user_type", rs.getString("user_type"));
-                    flightStaff.add(flightWorker);
                 } else {
-                    Map<String, Object> flightWorker = new HashMap<>();
                     for (String field : fields) {
                         if (field.equals("user_type")) {
                             flightWorker.put(field, rs.getString(field));
@@ -55,8 +45,8 @@ public class FlightStaffController {
                             flightWorker.put(field, rs.getInt(field));
                         }
                     }
-                    flightStaff.add(flightWorker);
                 }
+                flightStaff.add(flightWorker);
             }
             pstmt.executeUpdate();
             pstmt.close();
@@ -88,15 +78,7 @@ public class FlightStaffController {
         try {
             PreparedStatement pstmt = conn.prepareStatement(deleteStatement);
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
-                }
-            }
+            ControllerUtilities.preparedSelectOrDeleteStatementSetParameters(pstmt, searchConditions);
 
             pstmt.executeUpdate();
             pstmt.close();

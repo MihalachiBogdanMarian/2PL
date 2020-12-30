@@ -28,26 +28,16 @@ public class FeedbackController {
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
-                }
-            }
+            ControllerUtilities.preparedSelectOrDeleteStatementSetParameters(pstmt, searchConditions);
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
+                Map<String, Object> feedback = new HashMap<>();
                 if (fields.size() == 1 && fields.get(0).equals("*")) {
-                    Map<String, Object> feedback = new HashMap<>();
                     feedback.put("user_id", rs.getInt("user_id"));
                     feedback.put("company_id", rs.getInt("company_id"));
                     feedback.put("message", rs.getString("message"));
-                    feedbackList.add(feedback);
                 } else {
-                    Map<String, Object> feedback = new HashMap<>();
                     for (String field : fields) {
                         if (field.equals("message")) {
                             feedback.put(field, rs.getString(field));
@@ -55,8 +45,8 @@ public class FeedbackController {
                             feedback.put(field, rs.getInt(field));
                         }
                     }
-                    feedbackList.add(feedback);
                 }
+                feedbackList.add(feedback);
             }
             pstmt.executeUpdate();
             pstmt.close();

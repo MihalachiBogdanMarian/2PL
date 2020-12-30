@@ -33,7 +33,7 @@ public class Delete extends AbstractOperation {
                 flightController.deleteFlights(searchConditions);
                 break;
             case "flights_deposit":
-                FlightInDepositController flightInDepositController = new FlightInDepositController(conn2);
+                FlightInDepositController flightInDepositController = new FlightInDepositController(conn1);
                 objectsBeforeDeletion = flightInDepositController.selectFlightsInDeposit(Arrays.asList("*"), searchConditions);
                 convertMapToObjects(this.tableName, objectsBeforeDeletion);
                 flightInDepositController.deleteFlightInDeposit(searchConditions);
@@ -51,13 +51,13 @@ public class Delete extends AbstractOperation {
                 stopoverController.deleteStopovers(searchConditions);
                 break;
             case "tickets":
-                TicketController ticketController = new TicketController(conn2);
+                TicketController ticketController = new TicketController(conn1);
                 objectsBeforeDeletion = ticketController.selectTickets(Arrays.asList("*"), searchConditions);
                 convertMapToObjects(this.tableName, objectsBeforeDeletion);
                 ticketController.deleteTickets(searchConditions);
                 break;
             case "users":
-                UserController userController = new UserController(conn2);
+                UserController userController = new UserController(conn1);
                 objectsBeforeDeletion = userController.selectUsers(Arrays.asList("*"), searchConditions);
                 convertMapToObjects(this.tableName, objectsBeforeDeletion);
                 userController.deleteUsers(searchConditions);

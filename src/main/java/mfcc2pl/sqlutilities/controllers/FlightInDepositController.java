@@ -28,37 +28,16 @@ public class FlightInDepositController {
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
-                }
-            }
+            ControllerUtilities.preparedSelectOrDeleteStatementSetParameters(pstmt, searchConditions);
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
+                Map<String, Object> flightInDeposit = new HashMap<>();
                 if (fields.size() == 1 && fields.get(0).equals("*")) {
-                    Map<String, Object> flightInDeposit = new HashMap<>();
-                    flightInDeposit.put("id", rs.getInt("id"));
-                    flightInDeposit.put("departure_date", rs.getDate("departure_date"));
-                    flightInDeposit.put("duration", rs.getInt("duration"));
-                    flightInDeposit.put("delay", rs.getInt("delay"));
-                    flightInDeposit.put("distance", rs.getInt("distance"));
-                    flightInDeposit.put("stopovers", rs.getInt("stopovers"));
-                    flightInDeposit.put("airport_name", rs.getString("airport_name"));
-                    flightInDeposit.put("airplane_id", rs.getInt("airplane_id"));
-                    flightInDeposit.put("first_class_seats", rs.getInt("first_class_seats"));
-                    flightInDeposit.put("second_class_seats", rs.getInt("second_class_seats"));
-                    flightInDeposit.put("first_class_price", rs.getInt("first_class_price"));
-                    flightInDeposit.put("second_class_price", rs.getInt("second_class_price"));
+                    FlightController.addAllFlightAttributesForSelect(rs, flightInDeposit);
                     flightInDeposit.put("reason", rs.getString("reason"));
                     flightInDeposit.put("rescheduled", rs.getDate("rescheduled"));
-                    flightsInDeposit.add(flightInDeposit);
                 } else {
-                    Map<String, Object> flightInDeposit = new HashMap<>();
                     for (String field : fields) {
                         if (field.equals("departure_date") || field.equals("rescheduled")) {
                             flightInDeposit.put(field, rs.getDate(field));
@@ -68,8 +47,8 @@ public class FlightInDepositController {
                             flightInDeposit.put(field, rs.getInt(field));
                         }
                     }
-                    flightsInDeposit.add(flightInDeposit);
                 }
+                flightsInDeposit.add(flightInDeposit);
             }
             pstmt.executeUpdate();
             pstmt.close();
@@ -85,18 +64,9 @@ public class FlightInDepositController {
             String insertStatement = "insert into flights_deposit(flight_id, departure_date, duration, delay, distance, stopovers, airport_name, airplane_id, first_class_seats, second_class_seats, first_class_price, second_class_price, reason, rescheduled) " +
                     "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement pstmt = conn.prepareStatement(insertStatement);
-            pstmt.setInt(1, flightInDeposit.getId());
-            pstmt.setDate(2, flightInDeposit.getDepartureDate());
-            pstmt.setInt(3, flightInDeposit.getDuration());
-            pstmt.setInt(4, flightInDeposit.getDelay());
-            pstmt.setInt(5, flightInDeposit.getDistance());
-            pstmt.setInt(6, flightInDeposit.getStopovers());
-            pstmt.setString(7, flightInDeposit.getAirportName());
-            pstmt.setInt(8, flightInDeposit.getAirplaneId());
-            pstmt.setInt(9, flightInDeposit.getFirstClassSeats());
-            pstmt.setInt(10, flightInDeposit.getSecondClassSeats());
-            pstmt.setInt(11, flightInDeposit.getFirstClassPrice());
-            pstmt.setInt(12, flightInDeposit.getSecondClassPrice());
+
+            FlightController.setAllFlightParametersForInsert(pstmt, flightInDeposit.getId(), flightInDeposit.getDepartureDate(), flightInDeposit.getDuration(), flightInDeposit.getDelay(), flightInDeposit.getDistance(), flightInDeposit.getStopovers(), flightInDeposit.getAirportName(), flightInDeposit.getAirplaneId(), flightInDeposit.getFirstClassSeats(), flightInDeposit.getSecondClassSeats(), flightInDeposit.getFirstClassPrice(), flightInDeposit.getSecondClassPrice());
+
             pstmt.setString(13, flightInDeposit.getReason());
             if (flightInDeposit.getRescheduled() == null) {
                 pstmt.setNull(14, Types.NULL);
@@ -116,15 +86,7 @@ public class FlightInDepositController {
         try {
             PreparedStatement pstmt = conn.prepareStatement(deleteStatement);
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
-                }
-            }
+            ControllerUtilities.preparedSelectOrDeleteStatementSetParameters(pstmt, searchConditions);
 
             pstmt.executeUpdate();
             pstmt.close();

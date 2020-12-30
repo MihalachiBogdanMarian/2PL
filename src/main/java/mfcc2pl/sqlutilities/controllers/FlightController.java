@@ -28,46 +28,17 @@ public class FlightController {
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
-                }
-            }
+            ControllerUtilities.preparedSelectOrDeleteStatementSetParameters(pstmt, searchConditions);
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
+                Map<String, Object> flight = new HashMap<>();
                 if (fields.size() == 1 && fields.get(0).equals("*")) {
-                    Map<String, Object> flight = new HashMap<>();
-                    flight.put("id", rs.getInt("id"));
-                    flight.put("departure_date", rs.getDate("departure_date"));
-                    flight.put("duration", rs.getInt("duration"));
-                    flight.put("delay", rs.getInt("delay"));
-                    flight.put("distance", rs.getInt("distance"));
-                    flight.put("stopovers", rs.getInt("stopovers"));
-                    flight.put("airport_name", rs.getString("airport_name"));
-                    flight.put("airplane_id", rs.getInt("airplane_id"));
-                    flight.put("first_class_seats", rs.getInt("first_class_seats"));
-                    flight.put("second_class_seats", rs.getInt("second_class_seats"));
-                    flight.put("first_class_price", rs.getInt("first_class_price"));
-                    flight.put("second_class_price", rs.getInt("second_class_price"));
-                    flights.add(flight);
+                    addAllFlightAttributesForSelect(rs, flight);
                 } else {
-                    Map<String, Object> flight = new HashMap<>();
-                    for (String field : fields) {
-                        if (field.equals("departure_date")) {
-                            flight.put(field, rs.getDate(field));
-                        } else if (field.equals("airport_name")) {
-                            flight.put(field, rs.getString(field));
-                        } else {
-                            flight.put(field, rs.getInt(field));
-                        }
-                    }
-                    flights.add(flight);
+                    addSomeFlightAttributesForSelect(rs, flight, fields);
                 }
+                flights.add(flight);
             }
             pstmt.executeUpdate();
             pstmt.close();
@@ -83,20 +54,14 @@ public class FlightController {
             String insertStatement = "insert into flights(id, departure_date, duration, delay, distance, stopovers, airport_name, airplane_id, first_class_seats, second_class_seats, first_class_price, second_class_price) " +
                     "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement pstmt = conn.prepareStatement(insertStatement);
-            pstmt.setInt(1, flight.getId());
-            pstmt.setDate(2, flight.getDepartureDate());
-            pstmt.setInt(3, flight.getDuration());
-            pstmt.setInt(4, flight.getDelay());
-            pstmt.setInt(5, flight.getDistance());
-            pstmt.setInt(6, flight.getStopovers());
-            pstmt.setString(7, flight.getAirportName());
-            pstmt.setInt(8, flight.getAirplaneId());
-            pstmt.setInt(9, flight.getFirstClassSeats());
-            pstmt.setInt(10, flight.getSecondClassSeats());
-            pstmt.setInt(11, flight.getFirstClassPrice());
-            pstmt.setInt(12, flight.getSecondClassPrice());
+
+            setAllFlightParametersForInsert(pstmt, flight.getId(), flight.getDepartureDate(), flight.getDuration(), flight.getDelay(), flight.getDistance(), flight.getStopovers(), flight.getAirportName(), flight.getAirplaneId(), flight.getFirstClassSeats(), flight.getSecondClassSeats(), flight.getFirstClassPrice(), flight.getSecondClassPrice());
+
             pstmt.executeUpdate();
             pstmt.close();
+
+            // make a refresh of the materialized view referred in the other database
+            ControllerUtilities.refreshMaterializedView("flight_details");
         } catch (SQLException ex) {
             Logger.getLogger(FlightController.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -104,50 +69,30 @@ public class FlightController {
 
     public void updateFlights(String updateType, String fieldName, Object fieldValue, List<SearchCondition> searchConditions) {
         String updateStatement;
-        if (updateType.equals("u")) {
-            updateStatement = Utilities.formUpdateStatement("flights", fieldName, searchConditions);
-        } else if (updateType.equals("i")) {
-            updateStatement = Utilities.formUpdateStatementIncrement("flights", fieldName, searchConditions);
-        } else if (updateType.equals("d")) {
-            updateStatement = Utilities.formUpdateStatementDecrement("flights", fieldName, searchConditions);
-        } else {
-            updateStatement = Utilities.formUpdateStatement("flights", fieldName, searchConditions);
+        switch (updateType) {
+            case "i":
+                updateStatement = Utilities.formUpdateStatementIncrement("flights", fieldName, searchConditions);
+                break;
+            case "d":
+                updateStatement = Utilities.formUpdateStatementDecrement("flights", fieldName, searchConditions);
+                break;
+            default:
+                updateStatement = Utilities.formUpdateStatement("flights", fieldName, searchConditions);
+                break;
         }
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(updateStatement);
-            if (fieldValue instanceof Integer) {
-                pstmt.setInt(1, (Integer) fieldValue);
-            } else if (fieldValue instanceof Date) {
-                pstmt.setDate(1, (Date) fieldValue);
-            } else if (fieldValue instanceof String) {
-                pstmt.setString(1, fieldValue.toString());
-            }
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    if (updateType.equals("i") || updateType.equals("d")) {
-                        pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
-                    } else {
-                        pstmt.setInt(i + 2, (Integer) searchConditions.get(i).getValue());
-                    }
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    if (updateType.equals("i") || updateType.equals("d")) {
-                        pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
-                    } else {
-                        pstmt.setDate(i + 2, (Date) searchConditions.get(i).getValue());
-                    }
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    if (updateType.equals("i") || updateType.equals("d")) {
-                        pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
-                    } else {
-                        pstmt.setString(i + 2, searchConditions.get(i).getValue().toString());
-                    }
-                }
-            }
+            ControllerUtilities.preparedUpdateStatementSetParameters(pstmt, updateType, fieldValue, searchConditions);
 
             pstmt.executeUpdate();
             pstmt.close();
+
+            if (fieldName.equals("id") || fieldName.equals("first_class_price") || fieldName.equals("second_class_price") || fieldName.equals("stopovers")) {
+                // make a refresh of the materialized view referred in the other database
+                ControllerUtilities.refreshMaterializedView("flight_details");
+            }
         } catch (SQLException ex) {
             Logger.getLogger(FlightController.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -159,20 +104,57 @@ public class FlightController {
         try {
             PreparedStatement pstmt = conn.prepareStatement(deleteStatement);
 
-            for (int i = 0; i < searchConditions.size(); i++) {
-                if (searchConditions.get(i).getValue() instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof Date) {
-                    pstmt.setDate(i + 1, (Date) searchConditions.get(i).getValue());
-                } else if (searchConditions.get(i).getValue() instanceof String) {
-                    pstmt.setString(i + 1, searchConditions.get(i).getValue().toString());
-                }
-            }
+            ControllerUtilities.preparedSelectOrDeleteStatementSetParameters(pstmt, searchConditions);
 
             pstmt.executeUpdate();
             pstmt.close();
+
+            // make a refresh of the materialized view referred in the other database
+            ControllerUtilities.refreshMaterializedView("flight_details");
         } catch (SQLException ex) {
             Logger.getLogger(FlightController.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    protected static void addAllFlightAttributesForSelect(ResultSet rs, Map<String, Object> flight) throws SQLException {
+        flight.put("id", rs.getInt("id"));
+        flight.put("departure_date", rs.getDate("departure_date"));
+        flight.put("duration", rs.getInt("duration"));
+        flight.put("delay", rs.getInt("delay"));
+        flight.put("distance", rs.getInt("distance"));
+        flight.put("stopovers", rs.getInt("stopovers"));
+        flight.put("airport_name", rs.getString("airport_name"));
+        flight.put("airplane_id", rs.getInt("airplane_id"));
+        flight.put("first_class_seats", rs.getInt("first_class_seats"));
+        flight.put("second_class_seats", rs.getInt("second_class_seats"));
+        flight.put("first_class_price", rs.getInt("first_class_price"));
+        flight.put("second_class_price", rs.getInt("second_class_price"));
+    }
+
+    protected static void addSomeFlightAttributesForSelect(ResultSet rs, Map<String, Object> flight, List<String> fields) throws SQLException {
+        for (String field : fields) {
+            if (field.equals("departure_date")) {
+                flight.put(field, rs.getDate(field));
+            } else if (field.equals("airport_name")) {
+                flight.put(field, rs.getString(field));
+            } else {
+                flight.put(field, rs.getInt(field));
+            }
+        }
+    }
+
+    protected static void setAllFlightParametersForInsert(PreparedStatement pstmt, int id, Date departureDate, int duration, int delay, int distance, int stopovers, String airportName, int airplaneId, int firstClassSeats, int secondClassSeats, int firstClassPrice, int secondClassPrice) throws SQLException {
+        pstmt.setInt(1, id);
+        pstmt.setDate(2, departureDate);
+        pstmt.setInt(3, duration);
+        pstmt.setInt(4, delay);
+        pstmt.setInt(5, distance);
+        pstmt.setInt(6, stopovers);
+        pstmt.setString(7, airportName);
+        pstmt.setInt(8, airplaneId);
+        pstmt.setInt(9, firstClassSeats);
+        pstmt.setInt(10, secondClassSeats);
+        pstmt.setInt(11, firstClassPrice);
+        pstmt.setInt(12, secondClassPrice);
     }
 }
