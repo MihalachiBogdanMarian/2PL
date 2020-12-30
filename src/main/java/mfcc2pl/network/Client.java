@@ -18,6 +18,38 @@ public class Client {
     private final static Map<Integer, List<Operation>> transactions = new HashMap<>();
 
     public Client() {
+        // deadlock test
+        transactions.put(-7, Arrays.asList(
+                new Select("users", Arrays.asList("*"), Arrays.asList()),
+                new Update("flights", "u", "duration", 1000, Arrays.asList(new SearchCondition("id", "=", "20"))),
+                new Commit()
+        ));
+        transactions.put(-6, Arrays.asList(
+                new Update("flights", "u", "duration", 2000, Arrays.asList(new SearchCondition("id", "=", "20"))),
+                new Update("users", "u", "duration", 2000, Arrays.asList(new SearchCondition("id", "=", "20"))),
+                new Commit()
+        ));
+
+        // course test
+        transactions.put(-5, Arrays.asList(
+                new Update("users", "u", "address", "Cluj", Arrays.asList(new SearchCondition("id", "=", "10"))),
+                new Update("flights", "u", "duration", 1, Arrays.asList(new SearchCondition("id", "=", "10"))),
+                new Update("tickets", "u", "price", 1, Arrays.asList(new SearchCondition("code", "=", "10"))),
+                new Commit()
+        ));
+        transactions.put(-4, Arrays.asList(
+                new Select("users", Arrays.asList("*"), Arrays.asList()),
+                new Update("flights", "i", "duration", "duration", Arrays.asList(new SearchCondition("id", "=", "10"))),
+                new Commit()
+        ));
+        transactions.put(-3, Arrays.asList(
+                new Select("tickets", Arrays.asList("*"), Arrays.asList()),
+                new Update("flights", "u", "duration", 3, Arrays.asList(new SearchCondition("id", "=", "10"))),
+                new Update("tickets", "u", "price", 3, Arrays.asList(new SearchCondition("code", "=", "10"))),
+                new Commit()
+        ));
+
+        // initial test
         transactions.put(-2, Arrays.asList(
                 new Insert("users", new User(100, "John", "White", Date.valueOf("1990-03-16"), "New York", "0789438629", "john100@user.com", "8DHW6LC20O", "user")),
                 new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "john1@user.com"), new SearchCondition("password", "=", "8DHW6LC20O"))),
@@ -27,6 +59,7 @@ public class Client {
                 new Commit()
         ));
 
+        /* use cases */
         /* register a new user and log him in */
         transactions.put(0, Arrays.asList(
                 new Insert("users", new User(100, "John", "White", Date.valueOf("1990-03-16"), "New York", "0789438629", "john100@user.com", "8DHW6LC20O", "user")),
@@ -35,12 +68,12 @@ public class Client {
                 new Commit()
         ));
         /* log out user */
-        transactions.put(1, Arrays.asList(
+        transactions.put(2, Arrays.asList(
                 new Update("users", "u", "logged", 0, Arrays.asList(new SearchCondition("id", "=", 100))),
                 new Commit()
         ));
         /* post feedback to a company following a flight */
-        transactions.put(2, Arrays.asList(
+        transactions.put(1, Arrays.asList(
                 new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "john1@user.com"), new SearchCondition("password", "=", "8DHW6LC20O"))),
                 new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 100))),
                 new Select("companies", Arrays.asList("id"), Arrays.asList(new SearchCondition("name", "=", "SWISS"))),
@@ -137,6 +170,19 @@ public class Client {
             String response = client.sendOperationToServer(transaction.get(i), socket);
             System.out.println(response);
 
+            if (response.equals("Wait")) {
+                System.out.println("I have to wait now!");
+
+                String unblockOrAbortResponse = client.waitResponseFromServer(socket);
+                System.out.println(unblockOrAbortResponse);
+
+                if (unblockOrAbortResponse.equals("Aborted")) {
+                    break;
+                } else {
+
+                }
+            }
+
             i++;
         }
 
@@ -159,6 +205,18 @@ public class Client {
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             objectOutputStream.writeObject(operation);
+            String response = in.readLine();
+            return response.replaceAll("\\\\&n", "\n").replaceAll("\\\\&t", "\t");
+        } catch (UnknownHostException e) {
+            System.err.println("No server listening... " + e);
+            return null;
+        }
+    }
+
+    public String waitResponseFromServer(Socket socket) throws IOException {
+        try {
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
             String response = in.readLine();
             return response.replaceAll("\\\\&n", "\n").replaceAll("\\\\&t", "\t");
         } catch (UnknownHostException e) {

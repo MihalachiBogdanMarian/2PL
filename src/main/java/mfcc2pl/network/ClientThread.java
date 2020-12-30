@@ -54,12 +54,26 @@ public class ClientThread extends Thread {
                 Operation operation = (Operation) objectInputStream.readObject();
 
                 if (operation.getName().equals("commit")) {
+                    synchronized (server.locks) {
+                        synchronized (server.lockId) {
+                            synchronized (server.waitForGraph) {
+                                Utilities.releaseAndDistributeLocks(server.locks, server.lockId, server.waitForGraph, this.transactionId);
+                            }
+                        }
+                    }
+                    synchronized (server.transactions) {
+                        Utilities.setStatus(server.transactions, this.transactionId, "committed");
+                    }
+
+                    out.println("Commited");
+                    out.flush();
+
                     break;
                 }
 
                 Integer transactionHoldingIncompatibleLock = Utilities.getTransactionHoldingIncompatibleLock(server.locks, this.transactionId, operation);
-                if (transactionHoldingIncompatibleLock == null) {
-                    synchronized (server.locks) {
+                if (transactionHoldingIncompatibleLock == null) { // no incompatible lock
+                    synchronized (server.locks) { // acquire the lock
                         Utilities.block(server.locks, server.lockId, this.transactionId, operation);
                     }
                     synchronized (server.lockId) {
@@ -71,16 +85,68 @@ public class ClientThread extends Thread {
 
                     out.println("Executed " + operation);
                     out.flush();
-                } else {
-                    synchronized (server.waitForGraph) {
-                        Utilities.wait(server.waitForGraph, transactionHoldingIncompatibleLock, this.transactionId, operation);
+                } else { // the is an incompatible lock
+                    if (transactionHoldingIncompatibleLock == this.transactionId) { // if it is my write lock
+                        // if select and I own only the write lock, I will acquire also the read lock on that table
+                        if (operation.getName().equals("select") && !Utilities.hasLock(server.locks, "read", this.transactionId, operation.getTableName())) {
+                            synchronized (server.locks) {
+                                Utilities.block(server.locks, server.lockId, this.transactionId, operation);
+                            }
+                            synchronized (server.lockId) {
+                                server.lockId++;
+                            }
+                        }
+
+                        operation.execute(conn1, conn2);
+                        Utilities.getTransaction(server.transactions, this.transactionId).addOperation(operation);
+
+                        out.println("Executed " + operation);
+                        out.flush();
+                    } else { // someone else has the incompatible lock, so I have to wait
+                        synchronized (server.waitForGraph) {
+                            Utilities.wait(server.waitForGraph, transactionHoldingIncompatibleLock, this.transactionId, operation);
+                        }
+                        String lockType = "";
+                        if (operation.getName().equals("select")) {
+                            lockType = "read";
+                        } else {
+                            lockType = "write";
+                        }
+
+                        out.println("Wait");
+                        out.flush();
+
+                        server.displayManagementEntities();
+
+                        while (true) {
+                            synchronized (server.locks) {
+                                if (!Utilities.isWaiting(server.locks, transactionId, lockType, operation.getTableName())) {
+                                    break;
+                                }
+                            }
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        operation.execute(conn1, conn2);
+                        Utilities.getTransaction(server.transactions, this.transactionId).addOperation(operation);
+
+                        server.displayManagementEntities();
+
+                        out.println("Executed " + operation);
+                        out.flush();
                     }
+
                 }
 
-                server.displayTransactions();
-                server.displayLocks();
-                server.displayWaitForGraph();
+                server.displayManagementEntities();
             }
+
+            server.displayManagementEntities();
+
             if (server.getNrClients() > 0) {
                 server.setNrClients(server.getNrClients() - 1);
                 int transactionNumber = Utilities.retrieve("..\\2PL\\src\\main\\resources\\current_transaction.txt");

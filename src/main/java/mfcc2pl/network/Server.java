@@ -88,7 +88,6 @@ public class Server {
                 System.out.println("\t" + operation);
             }
         }
-        System.out.println("");
     }
 
     public void displayLocks() {
@@ -96,7 +95,6 @@ public class Server {
         for (Lock lock : this.locks) {
             System.out.println(lock);
         }
-        System.out.println("");
     }
 
     public void displayWaitForGraph() {
@@ -104,6 +102,13 @@ public class Server {
         for (WaitForGraphNode waitForGraphNode : this.waitForGraph) {
             System.out.println(waitForGraphNode);
         }
+    }
+
+    public void displayManagementEntities() {
+        System.out.println("");
+        displayTransactions();
+        displayLocks();
+        displayWaitForGraph();
         System.out.println("");
     }
 }
