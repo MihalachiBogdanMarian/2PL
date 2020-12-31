@@ -83,8 +83,8 @@ select * from user_ids;
 create table feedback(
   	user_id number(10, 0),
   	company_id number(10, 0),
---    foreign key (company_id) references companies(id),
---    foreign key (user_id) references user_ids(id) on delete set null,
+    foreign key (company_id) references companies(id),
+    foreign key (user_id) references user_ids(id) on delete set null,
   	message varchar(500) not null
 ) tablespace airport;
 
@@ -273,6 +273,8 @@ begin
     end loop;
 end;
 /
+
+drop trigger populate_stopovers;
 
 insert into flights values (101, date '2021-01-14', 180, 0, 2500, 3, 'Beijing Capital International Airport', 1, 150, 80, 450, 800);
 insert into flights values (102, date '2021-02-09', 240, 0, 3000, 2, 'Los Angeles International Airport', 2, 120, 50, 300, 600);

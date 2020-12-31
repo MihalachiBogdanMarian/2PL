@@ -16,8 +16,8 @@ create table tickets (
   	flight_id number (10, 0) not null,
     stopover number (10, 0) not null,
   	foreign key (passenger_id) references users(id) on delete cascade validate,
-  	--foreign key (flight_id) references flight_details(id) on delete cascade validate,
-    constraint ids_pair_unique unique(passenger_id, flight_id),
+  	foreign key (flight_id) references flight_details(id) on delete cascade validate,
+--    constraint ids_pair_unique unique(passenger_id, flight_id),
     constraint check_class check (class = 1 or class = 2)
 ) tablespace airport;
 
@@ -97,7 +97,7 @@ create table flights_staff(
     user_type varchar(50) not null,
     constraint check_type_2 check (user_type in ('pilot', 'fa')),
     constraint ids_pair_unique_2 unique(flight_id, user_id),
-    --foreign key (flight_id) references flight_details(id),
+    foreign key (flight_id) references flight_details(id),
     foreign key (user_id) references users(id)
 ) tablespace airport;
 

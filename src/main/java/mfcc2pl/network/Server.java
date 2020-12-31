@@ -1,6 +1,5 @@
 package mfcc2pl.network;
 
-import mfcc2pl.Utilities;
 import mfcc2pl.utilities2pl.Lock;
 import mfcc2pl.utilities2pl.Transaction;
 import mfcc2pl.utilities2pl.WaitForGraphNode;
@@ -24,8 +23,8 @@ public class Server {
     protected List<Transaction> transactions;
     protected List<Lock> locks;
     protected List<WaitForGraphNode> waitForGraph;
-    protected Integer transactionId;
-    protected Integer lockId;
+    protected Integer transactionId; // as sequence counter
+    protected Integer lockId; // as sequence counter
 
     public static void main(String[] args) throws IOException {
         Server server = new Server();
@@ -39,8 +38,8 @@ public class Server {
         transactions = new ArrayList<>();
         locks = new ArrayList<>();
         waitForGraph = new ArrayList<>();
-        transactionId = 0;
-        lockId = 0;
+        transactionId = 1;
+        lockId = 1;
     }
 
     public void waitForClients() throws IOException {
@@ -55,10 +54,8 @@ public class Server {
             }
         } catch (IOException e) {
             System.err.println("Ooops... " + e);
-            Utilities.store(0, "..\\2PL\\src\\main\\resources\\current_transaction.txt");
         } finally {
             getServerSocket().close();
-            Utilities.store(0, "..\\2PL\\src\\main\\resources\\current_transaction.txt");
         }
     }
 
@@ -84,13 +81,20 @@ public class Server {
     }
 
     public synchronized Transaction getTransaction(Integer id) {
+        // get the transaction with a specified id
         return transactions.stream()
                 .filter(transaction -> transaction.getId() == id)
                 .findAny()
                 .orElse(null);
     }
 
+    public synchronized void setTransaction(Transaction transaction) {
+        transactionId++;
+        transactions.add(transaction);
+    }
+
     public synchronized Integer getTransactionHoldingIncompatibleLock(Operation operation) {
+        // get the transaction id holding an incompatible lock or null if there is no such transaction
         if (operation.getName().equals("select")) {
             // if there is any write lock on the table
             Lock lockToFind = locks.stream()
@@ -109,7 +113,7 @@ public class Server {
                     .filter(lock -> lock.getTable().equals(operation.getTableName()))
                     .findAny()
                     .orElse(null);
-            if (lockToFind == null) { // no write lock
+            if (lockToFind == null) { // no lock
                 return null;
             } else { // the transaction holding the lock
                 return lockToFind.getTransactionId();
@@ -118,6 +122,7 @@ public class Server {
     }
 
     public synchronized void block(Integer transactionId, Operation operation) {
+        // block a table in read/write mode
         String lockType = "";
         if (operation.getName().equals("select")) {
             lockType = "read";
@@ -125,19 +130,24 @@ public class Server {
             lockType = "write";
         }
         locks.add(new Lock(lockId, lockType, operation.getTableName(), transactionId));
+        lockId++;
     }
 
     public synchronized void wait(Integer transactionIdHasLock, Integer transactionIdToWait, Operation operation) {
+        // wait for a lock
         String lockType = "";
         if (operation.getName().equals("select")) {
             lockType = "read";
         } else {
             lockType = "write";
         }
-        waitForGraph.add(new WaitForGraphNode(lockType, operation.getTableName(), transactionIdHasLock, transactionIdToWait));
+        synchronized (waitForGraph) {
+            waitForGraph.add(new WaitForGraphNode(lockType, operation.getTableName(), transactionIdHasLock, transactionIdToWait));
+        }
     }
 
     public synchronized boolean hasLock(String type, Integer transactionId, String tableName) {
+        // check if a transaction possesses a lock on a table
         Lock lockToFind = locks.stream()
                 .filter(lock -> lock.getType().equals(type)
                         && lock.getTable().equals(tableName)
@@ -152,6 +162,7 @@ public class Server {
     }
 
     public synchronized void releaseAndDistributeLocks(Integer transactionId) {
+        // release the locks of a committed/aborted transaction and give them to the transaction waiting for them for the longest time
         List<Lock> locksToBeRemoved = new ArrayList<Lock>();
 
         for (Lock lock : locks) {
@@ -161,37 +172,61 @@ public class Server {
         }
 
         for (Lock lock : locksToBeRemoved) {
-            if (lock.getType().equals("read")) {
-                WaitForGraphNode waitForGraphNode = waitForGraph.stream()
-                        .filter(wfgn -> wfgn.getLockType().equals(lock.getType())
-                                && wfgn.getTable().equals(lock.getTable()))
+            WaitForGraphNode waitForGraphNode = null;
+            if (lock.getType().equals("read")) { // if read lock
+                // we check to see if it also has the write lock on that table
+                Lock writeLock = locksToBeRemoved.stream()
+                        .filter(lock2 -> lock2.getType().equals("write")
+                                && lock2.getTable().equals(lock.getTable()))
                         .findAny()
                         .orElse(null);
-                if (waitForGraphNode != null) {
-                    locks.add(new Lock(lockId, lock.getType(), lock.getTable(), waitForGraphNode.getTransactionIdWaitsLock()));
-                    lockId++;
-                    waitForGraph.remove(waitForGraphNode);
+
+                if (writeLock == null) { // only read lock, so give it to someone waiting for a write lock on that table
+                    giveLock(lock, transactionId, "write");
+                } else { // also has write lock, so give it to someone waiting for a read/write lock on that table
+                    giveLock(lock, transactionId, "any");
                 }
             } else {
-                WaitForGraphNode waitForGraphNode = waitForGraph.stream()
-                        .filter(wfgn -> wfgn.getTable().equals(lock.getTable()))
-                        .findAny()
-                        .orElse(null);
-                if (waitForGraphNode != null) {
-                    locks.add(new Lock(lockId, waitForGraphNode.getLockType(), lock.getTable(), waitForGraphNode.getTransactionIdWaitsLock()));
-                    lockId++;
-                    waitForGraph.remove(waitForGraphNode);
-                }
+                giveLock(lock, transactionId, "any");
             }
         }
         locks.removeAll(locksToBeRemoved);
     }
 
+    public void giveLock(Lock lock, Integer transactionId, String lockTypeWanting) {
+        WaitForGraphNode waitForGraphNode = null;
+        synchronized (waitForGraph) { // get the transaction (the one who has waited the most) waiting for ...
+            if (lockTypeWanting.equals("any")) { // a read/write lock on that table
+                waitForGraphNode = waitForGraph.stream()
+                        .filter(wfgn -> wfgn.getTable().equals(lock.getTable())
+                                && wfgn.getTransactionIdHasLock() == transactionId)
+                        .findAny()
+                        .orElse(null);
+            } else if (lockTypeWanting.equals("write")) { // a write lock on that table
+                waitForGraphNode = waitForGraph.stream()
+                        .filter(wfgn -> wfgn.getLockType().equals("write")
+                                && wfgn.getTable().equals(lock.getTable())
+                                && wfgn.getTransactionIdHasLock() == transactionId)
+                        .findAny()
+                        .orElse(null);
+            }
+            if (waitForGraphNode != null) { // give it the lock and remove the element in the wait-for graph
+                locks.add(new Lock(lockId, waitForGraphNode.getLockType(), lock.getTable(), waitForGraphNode.getTransactionIdWaitsLock()));
+                lockId++;
+                waitForGraph.remove(waitForGraphNode);
+            }
+        }
+    }
+
     public synchronized void setStatus(Integer transactionId, String status) {
+        // set transaction status (to committed/aborted)
         getTransaction(transactionId).setStatus(status);
     }
 
-    public synchronized int isWaiting(Integer transactionId, String lockType, String tableName) {
+    public synchronized int hasToWait(Integer transactionId, String lockType, String tableName) {
+        // returns 0 - the transaction has to wait no longer as it was aborted
+        // returns 1 - the transaction has to keep waiting
+        // returns 2 - the lock the transaction was waiting for was received
         Lock lockToFind = locks.stream()
                 .filter(lock -> lock.getType().equals(lockType)
                         && lock.getTable().equals(tableName)
@@ -210,37 +245,62 @@ public class Server {
     }
 
     public Pair<Integer, Integer> hasSimpleDeadlock() {
-        WaitForGraphNode waitForGraphNode = waitForGraph.stream()
-                .filter(wfgn -> transactionIdInConflict(wfgn) != null)
-                .findAny()
-                .orElse(null);
+        WaitForGraphNode waitForGraphNode = null;
+        // check if there is an element for which there exists a reversed element (hasLock <-> waitsLock)
+        synchronized (waitForGraph) {
+            waitForGraphNode = waitForGraph.stream()
+                    .filter(wfgn -> transactionIdInConflict(wfgn) != null)
+                    .findAny()
+                    .orElse(null);
+        }
 
-        if (waitForGraphNode == null) {
+        if (waitForGraphNode == null) { // no deadlock
             return null;
         } else {
+            // returns the pair - the id of the transaction that has waited less, the id of the transaction that has waited more
             return new Pair(waitForGraphNode.getTransactionIdWaitsLock(), waitForGraphNode.getTransactionIdHasLock());
         }
     }
 
     private Integer transactionIdInConflict(WaitForGraphNode wfgn) {
-        for (WaitForGraphNode wfgn2 : waitForGraph) {
-            if (wfgn2 != wfgn) {
-                if (wfgn.getTransactionIdHasLock() == wfgn2.getTransactionIdWaitsLock()
-                        && wfgn.getTransactionIdWaitsLock() == wfgn2.getTransactionIdHasLock()) {
-                    return wfgn2.getTransactionIdHasLock();
+        synchronized (waitForGraph) {
+            int wfgnIndex = waitForGraph.indexOf(wfgn);
+            if (wfgnIndex != -1) { // not a null element
+                for (int i = wfgnIndex + 1; i < waitForGraph.size(); i++) {
+                    // reversed
+                    if (wfgn.getTransactionIdHasLock() == waitForGraph.get(i).getTransactionIdWaitsLock()
+                            && wfgn.getTransactionIdWaitsLock() == waitForGraph.get(i).getTransactionIdHasLock()) {
+                        return waitForGraph.get(i).getTransactionIdHasLock(); // we return the one with which it is in conflict
+                    }
                 }
             }
         }
+
         return null;
     }
 
     public void resolveDeadlock(Connection conn1, Connection conn2, Pair<Integer, Integer> transactionsInConflict) {
+        // rollback to the transaction which has waited the least of the two
         getTransaction(transactionsInConflict.get1st()).rollback(conn1, conn2, getTransaction(transactionsInConflict.get1st()).getOperations().size() - 1);
+        // release and distribute its locks
         releaseAndDistributeLocks(transactionsInConflict.get1st());
+        // set its status to aborted
         setStatus(transactionsInConflict.get1st(), "aborted");
 
-        waitForGraph.removeIf(wfgn -> wfgn.getTransactionIdHasLock() == transactionsInConflict.get2nd()
-                && wfgn.getTransactionIdWaitsLock() == transactionsInConflict.get1st());
+        // clean the wait-for graph of the element for the transaction continuing executing
+        synchronized (waitForGraph) {
+            waitForGraph.removeIf(wfgn -> wfgn.getTransactionIdHasLock() == transactionsInConflict.get2nd()
+                    && wfgn.getTransactionIdWaitsLock() == transactionsInConflict.get1st());
+        }
+    }
+
+    public synchronized void displayManagementEntities(Integer transactionId) {
+        System.out.println("");
+        System.out.println("************************* " + transactionId + " *************************");
+        displayTransactions();
+        displayLocks();
+        displayWaitForGraph();
+        System.out.println("");
     }
 
     public void displayTransactions() {
@@ -265,14 +325,5 @@ public class Server {
         for (WaitForGraphNode waitForGraphNode : this.waitForGraph) {
             System.out.println(waitForGraphNode);
         }
-    }
-
-    public void displayManagementEntities(Integer transactionId) {
-        System.out.println("");
-        System.out.println("************************* " + transactionId + " *************************");
-        displayTransactions();
-        displayLocks();
-        displayWaitForGraph();
-        System.out.println("");
     }
 }

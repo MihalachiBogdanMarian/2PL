@@ -1,3 +1,4 @@
+COURSE TEST
 Transactions -5 -4 -3
 click 1
 click 2
@@ -10,3 +11,10 @@ click 3
 click 2 -> commit
 click 3
 click 3 -> commit
+
+DEADLOCK TEST
+Transactions -7 -6
+click 1
+click 2
+click 2 -> wait for 1
+click 1 -> wait for 2

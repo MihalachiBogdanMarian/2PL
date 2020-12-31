@@ -18,9 +18,9 @@ public class ClientThread extends Thread {
 
     private Socket socket = null;
     private final Server server;
-    private final Connection conn1;
-    private final Connection conn2;
-    private Integer transactionId;
+    private final Connection conn1; // connection the the first database
+    private final Connection conn2; // connection the the second database
+    private Integer transactionId; // the transaction id (>= 1) corresponding to the thread addressing this transaction
 
     public ClientThread(Server server, ServerSocket serverSocket, Socket clientSocket) {
         this.server = server;
@@ -38,18 +38,14 @@ public class ClientThread extends Thread {
         Transaction transaction;
         this.transactionId = server.transactionId;
         transaction = new Transaction(server.transactionId, new Timestamp(System.currentTimeMillis()), "active");
-        synchronized (server.transactionId) {
-            server.transactionId++;
-        }
-        synchronized (server.transactions) {
-            server.transactions.add(transaction);
-        }
+        server.setTransaction(transaction); // add a newly active transaction to the Transactions structure
 
         try {
             while (true) {
                 objectInputStream = new ObjectInputStream(socket.getInputStream());
                 PrintWriter out = new PrintWriter(socket.getOutputStream());
 
+                // read the next operation
                 Operation operation = (Operation) objectInputStream.readObject();
 
                 if (operation.getName().equals("commit")) {
@@ -58,23 +54,20 @@ public class ClientThread extends Thread {
                     server.setStatus(this.transactionId, "committed");
                     server.getTransaction(this.transactionId).addOperation(operation);
 
-                    out.println("Commited");
+                    out.println("Committed");
                     out.flush();
 
                     break;
                 }
 
                 Integer transactionHoldingIncompatibleLock = server.getTransactionHoldingIncompatibleLock(operation);
+
                 if (transactionHoldingIncompatibleLock == null) { // no incompatible lock
                     // acquire the lock
                     server.block(this.transactionId, operation);
 
-                    synchronized (server.lockId) {
-                        server.lockId++;
-                    }
-
-                    operation.execute(conn1, conn2);
-                    server.getTransaction(this.transactionId).addOperation(operation);
+                    operation.execute(conn1, conn2); // execute the operation
+                    server.getTransaction(this.transactionId).addOperation(operation); // add it to the executed operations
 
                     out.println("Executed " + operation);
                     out.flush();
@@ -84,12 +77,7 @@ public class ClientThread extends Thread {
                     if (transactionHoldingIncompatibleLock == this.transactionId) { // if it is my write lock
                         // if select and I own only the write lock, I will acquire also the read lock on that table
                         if (operation.getName().equals("select") && !server.hasLock("read", this.transactionId, operation.getTableName())) {
-
                             server.block(this.transactionId, operation);
-
-                            synchronized (server.lockId) {
-                                server.lockId++;
-                            }
                         }
 
                         operation.execute(conn1, conn2);
@@ -101,6 +89,7 @@ public class ClientThread extends Thread {
                         server.displayManagementEntities(this.transactionId);
                     } else { // someone else has the incompatible lock, so I have to wait
 
+                        // add element in the wait-for graph
                         server.wait(transactionHoldingIncompatibleLock, this.transactionId, operation);
 
                         String lockType = "";
@@ -117,16 +106,16 @@ public class ClientThread extends Thread {
 
                         int waitingStatus;
                         while (true) {
-                            waitingStatus = server.isWaiting(transactionId, lockType, operation.getTableName());
+                            waitingStatus = server.hasToWait(transactionId, lockType, operation.getTableName());
                             if (waitingStatus == 0 || waitingStatus == 2) {
                                 break;
                             }
 
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+//                            try {
+//                                Thread.sleep(1000);
+//                            } catch (InterruptedException e) {
+//                                e.printStackTrace();
+//                            }
                         }
 
                         if (waitingStatus == 2) { // continue execution
@@ -137,7 +126,7 @@ public class ClientThread extends Thread {
 
                             out.println("Executed " + operation);
                             out.flush();
-                        } else {
+                        } else { // have to abort
                             out.println("Aborted at " + operation);
                             out.flush();
 
@@ -152,8 +141,6 @@ public class ClientThread extends Thread {
 
             if (server.getNrClients() > 0) {
                 server.setNrClients(server.getNrClients() - 1);
-//                int transactionNumber = Utilities.retrieve("..\\2PL\\src\\main\\resources\\current_transaction.txt");
-//                Utilities.store(transactionNumber - 1, "..\\2PL\\src\\main\\resources\\current_transaction.txt");
                 socket.close();
             }
         } catch (IOException | ClassNotFoundException ex) {

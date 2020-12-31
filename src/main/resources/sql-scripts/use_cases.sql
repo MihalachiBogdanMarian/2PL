@@ -1,5 +1,3 @@
-drop trigger populate_stopovers;
-
 select * from airport_names;
 select * from city_names;
 

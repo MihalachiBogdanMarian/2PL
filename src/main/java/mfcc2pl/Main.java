@@ -13,19 +13,19 @@ public class Main {
     public static void main(String[] args) {
         System.out.println(Utilities.formSelectStatement(Arrays.asList("id"),
                 "users",
-                Arrays.asList(new SearchCondition("email", "=", "christina1@pilot.com"),
-                        new SearchCondition("password", "=", "CKL8XK70MR"))));
+                Arrays.asList(new SearchCondition("email", "=", "dave101@user.com"),
+                        new SearchCondition("password", "=", "8GMLWPO90S"))));
 
         List<Map<String, Object>> users = new UserController(Database.getConnection("users")).selectUsers(Arrays.asList("*"),
-                Arrays.asList(new SearchCondition("email", "=", "christina1@pilot.com"),
-                        new SearchCondition("password", "=", "CKL8XK70MR")));
+                Arrays.asList(new SearchCondition("email", "=", "dave101@user.com"),
+                        new SearchCondition("password", "=", "8GMLWPO90S")));
         for (Map<String, Object> user : users) {
             System.out.println(user.toString());
         }
 
         users = new UserController(Database.getConnection("users")).selectUsers(Arrays.asList("id"),
-                Arrays.asList(new SearchCondition("email", "=", "christina1@pilot.com"),
-                        new SearchCondition("password", "=", "CKL8XK70MR")));
+                Arrays.asList(new SearchCondition("email", "=", "dave101@user.com"),
+                        new SearchCondition("password", "=", "8GMLWPO90S")));
         for (Map<String, Object> user : users) {
             System.out.println(user.toString());
         }
@@ -43,8 +43,8 @@ public class Main {
         System.out.println(Utilities.formDeleteStatement("flights",
                 Arrays.asList(new SearchCondition("passenger_id", "=", "100"), new SearchCondition("flight_id", "=", "60"))));
 
-//        new UserController(Database.getConnection("users")).updateUsers("u", "first_name", "Christina", Arrays.asList(new SearchCondition("email", "=", "christina1@pilot.com"),
-//                new SearchCondition("password", "=", "CKL8XK70MR")));
+//        new UserController(Database.getConnection("users")).updateUsers("u", "first_name", "David", Arrays.asList(new SearchCondition("email", "=", "dave101@user.com"),
+//                new SearchCondition("password", "=", "8GMLWPO90S")));
 //        Database.commit("users");
 
 //        new UserController(Database.getConnection("users")).deleteUsers(Arrays.asList(new SearchCondition("id", "=", "300")));
@@ -55,7 +55,5 @@ public class Main {
 
 //        new UserController(Database.getConnection("users")).insertUser(new User(1000, "Nathaniel", "Zabawa", Date.valueOf("1995-11-22"), "Los Angeles", "0701909808", "nathaniel10@user.com", "00PAN23YWE", "passenger"));
 //        Database.commit("users");
-
-
     }
 }

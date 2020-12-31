@@ -33,11 +33,11 @@ public class DeadlockThread extends Thread {
 
                 server.resolveDeadlock(conn1, conn2, transactionInDeadlockId);
             }
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                Thread.sleep(1000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
         }
     }
 }
