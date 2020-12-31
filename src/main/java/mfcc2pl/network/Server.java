@@ -123,7 +123,7 @@ public class Server {
 
     public synchronized void block(Integer transactionId, Operation operation) {
         // block a table in read/write mode
-        String lockType = "";
+        String lockType;
         if (operation.getName().equals("select")) {
             lockType = "read";
         } else {
@@ -135,7 +135,7 @@ public class Server {
 
     public synchronized void wait(Integer transactionIdHasLock, Integer transactionIdToWait, Operation operation) {
         // wait for a lock
-        String lockType = "";
+        String lockType;
         if (operation.getName().equals("select")) {
             lockType = "read";
         } else {
@@ -154,16 +154,12 @@ public class Server {
                         && lock.getTransactionId() == transactionId)
                 .findAny()
                 .orElse(null);
-        if (lockToFind == null) {
-            return false;
-        } else {
-            return true;
-        }
+        return lockToFind != null;
     }
 
     public synchronized void releaseAndDistributeLocks(Integer transactionId) {
         // release the locks of a committed/aborted transaction and give them to the transaction waiting for them for the longest time
-        List<Lock> locksToBeRemoved = new ArrayList<Lock>();
+        List<Lock> locksToBeRemoved = new ArrayList<>();
 
         for (Lock lock : locks) {
             if (lock.getTransactionId() == transactionId) {
@@ -172,7 +168,6 @@ public class Server {
         }
 
         for (Lock lock : locksToBeRemoved) {
-            WaitForGraphNode waitForGraphNode = null;
             if (lock.getType().equals("read")) { // if read lock
                 // we check to see if it also has the write lock on that table
                 Lock writeLock = locksToBeRemoved.stream()
@@ -245,7 +240,7 @@ public class Server {
     }
 
     public Pair<Integer, Integer> hasSimpleDeadlock() {
-        WaitForGraphNode waitForGraphNode = null;
+        WaitForGraphNode waitForGraphNode;
         // check if there is an element for which there exists a reversed element (hasLock <-> waitsLock)
         synchronized (waitForGraph) {
             waitForGraphNode = waitForGraph.stream()
@@ -295,12 +290,12 @@ public class Server {
     }
 
     public synchronized void displayManagementEntities(Integer transactionId) {
-        System.out.println("");
+        System.out.println(" ");
         System.out.println("************************* " + transactionId + " *************************");
         displayTransactions();
         displayLocks();
         displayWaitForGraph();
-        System.out.println("");
+        System.out.println(" ");
     }
 
     public void displayTransactions() {

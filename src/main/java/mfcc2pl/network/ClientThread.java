@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 
 public class ClientThread extends Thread {
 
-    private Socket socket = null;
+    private final Socket socket;
     private final Server server;
     private final Connection conn1; // connection the the first database
     private final Connection conn2; // connection the the second database
@@ -92,7 +92,7 @@ public class ClientThread extends Thread {
                         // add element in the wait-for graph
                         server.wait(transactionHoldingIncompatibleLock, this.transactionId, operation);
 
-                        String lockType = "";
+                        String lockType;
                         if (operation.getName().equals("select")) {
                             lockType = "read";
                         } else {
@@ -147,7 +147,9 @@ public class ClientThread extends Thread {
             Logger.getLogger(ClientThread.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
-                objectInputStream.close();
+                if (objectInputStream != null) {
+                    objectInputStream.close();
+                }
             } catch (IOException ex) {
                 Logger.getLogger(ClientThread.class.getName()).log(Level.SEVERE, null, ex);
             }
