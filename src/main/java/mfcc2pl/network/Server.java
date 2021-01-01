@@ -205,10 +205,21 @@ public class Server {
                         .findAny()
                         .orElse(null);
             }
-            if (waitForGraphNode != null) { // give it the lock and remove the element in the wait-for graph
+            if (waitForGraphNode != null) {
+                // give it the lock
                 locks.add(new Lock(lockId, waitForGraphNode.getLockType(), lock.getTable(), waitForGraphNode.getTransactionIdWaitsLock()));
                 lockId++;
+
+                // remove the element in the wait-for graph
                 waitForGraph.remove(waitForGraphNode);
+
+                // announce all that were waiting for the same lock that tha transaction holding it has changed
+                for (WaitForGraphNode waitForGraphNode2 : waitForGraph) {
+                    if (waitForGraphNode2.getTable().equals(lock.getTable())
+                            && waitForGraphNode2.getTransactionIdHasLock() == transactionId) {
+                        waitForGraphNode2.setTransactionIdHasLock(waitForGraphNode.getTransactionIdWaitsLock());
+                    }
+                }
             }
         }
     }
@@ -216,6 +227,9 @@ public class Server {
     public synchronized void setStatus(Integer transactionId, String status) {
         // set transaction status (to committed/aborted)
         getTransaction(transactionId).setStatus(status);
+        if (status.equals("aborted")) {
+            getTransaction(transactionId).setOperations(new ArrayList<>());
+        }
     }
 
     public synchronized int hasToWait(Integer transactionId, String lockType, String tableName) {

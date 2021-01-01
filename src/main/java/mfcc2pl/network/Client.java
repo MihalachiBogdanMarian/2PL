@@ -12,6 +12,8 @@ public class Client {
 
     private final static String SERVER_ADDRESS = "127.0.0.1";
     private final static int PORT = 8100;
+    private static boolean restart = true;
+    private static boolean firstRun = true;
 
     public static void main(String[] args) throws IOException {
         Client client = new Client();
@@ -23,37 +25,49 @@ public class Client {
         Socket socket = new Socket(SERVER_ADDRESS, PORT);
 
         List<Operation> transaction = Transactions.getTransactions().get(transactionNumber);
-        int i = 0;
 
-        // send all operations inside a transaction at once
-        System.out.println("Press any key to start the transaction - start sending the operations to the server: ");
-        client.readFromKeyboard();
 
-        while (i < transaction.size()) {
-            // send one operation inside a transaction at a time
-//            System.out.print("\nPress any key to send the next operation: \n");
-//            client.readFromKeyboard();
+        while (restart) {
+            restart = false;
 
-            // send operation to the Server and wait for the response
-            String response = client.sendOperationToServer(transaction.get(i), socket);
-            System.out.println(response);
+            System.out.println("Press any key to start the transaction - start sending the operations to the server: ");
 
-            if (response.equals("Wait")) {
-                System.out.println("Blocked waiting for a lock! I have to wait now!");
-                System.out.println();
-
-                // wait for the next message from the Server
-                String unblockOrAbortResponse = client.waitResponseFromServer(socket);
-                System.out.println(unblockOrAbortResponse);
-
-                if (unblockOrAbortResponse.startsWith("Aborted")) {
-                    break;
-                } else {
-                }
+            if (firstRun) {
+                // send all operations inside a transaction at once
+                client.readFromKeyboard();
             }
 
-            // next operation
-            i++;
+            int i = 0;
+
+            while (i < transaction.size()) {
+                // send one operation inside a transaction at a time
+//                System.out.print("\nPress any key to send the next operation: \n");
+//                client.readFromKeyboard();
+
+                // send operation to the Server and wait for the response
+                String response = client.sendOperationToServer(transaction.get(i), socket);
+                System.out.println(response);
+
+                if (response.equals("Wait")) {
+                    System.out.println("Blocked waiting for a lock! I have to wait now!");
+                    System.out.println();
+
+                    // wait for the next message from the Server
+                    String unblockOrAbortResponse = client.waitResponseFromServer(socket);
+                    System.out.println(unblockOrAbortResponse);
+
+                    if (unblockOrAbortResponse.startsWith("Aborted")) {
+                        System.out.println("Trying to send the operations again!");
+                        restart = true; // automatically restart the transaction
+                        firstRun = false;
+                        break;
+                    } else {
+                    }
+                }
+
+                // next operation
+                i++;
+            }
         }
     }
 
