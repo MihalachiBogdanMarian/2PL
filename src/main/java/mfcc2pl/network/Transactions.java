@@ -86,10 +86,10 @@ public class Transactions {
         ));
         /* post feedback to a company following a flight */
         transactions.put(2, Arrays.asList(
-                new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "john1@user.com"), new SearchCondition("password", "=", "8DHW6LC20O"))),
+                new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "john100@user.com"), new SearchCondition("password", "=", "8DHW6LC20O"))),
                 new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 100))),
                 new Select("companies", Arrays.asList("id"), Arrays.asList(new SearchCondition("name", "=", "SWISS"))),
-                new Insert("feedback", new Feedback(50, 19, "Horrible flight! Dirty seats and uneducated flight attendants!")),
+                new Insert("feedback", new Feedback(100, 19, "Horrible flight! Dirty seats and uneducated flight attendants!")),
                 new Update("users", "u", "logged", 0, Arrays.asList(new SearchCondition("id", "=", 100))),
                 new Commit()
         ));
@@ -136,7 +136,7 @@ public class Transactions {
         ));
         /* buy a ticket */
         transactions.put(7, Arrays.asList(
-                new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "john1@user.com"), new SearchCondition("password", "=", "8DHW6LC20O"))),
+                new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "john100@user.com"), new SearchCondition("password", "=", "8DHW6LC20O"))),
                 new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 100))),
                 new Select("flights", Arrays.asList("*"), Arrays.asList(new SearchCondition("id", "=", "102"))),
                 new Insert("tickets", new Ticket(500, 300, 1, 100, 102, 0)),
@@ -147,7 +147,7 @@ public class Transactions {
         ));
         /* retract a ticket */
         transactions.put(8, Arrays.asList(
-                new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "john1@user.com"), new SearchCondition("password", "=", "8DHW6LC20O"))),
+                new Select("users", Arrays.asList("id"), Arrays.asList(new SearchCondition("email", "=", "john100@user.com"), new SearchCondition("password", "=", "8DHW6LC20O"))),
                 new Update("users", "u", "logged", 1, Arrays.asList(new SearchCondition("id", "=", 100))),
                 new Delete("tickets", Arrays.asList(new SearchCondition("passenger_id", "=", "100"), new SearchCondition("flight_id", "=", "102"))),
                 new Update("users", "u", "type", "user", Arrays.asList(new SearchCondition("id", "=", 100))),

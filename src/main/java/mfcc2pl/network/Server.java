@@ -157,7 +157,7 @@ public class Server {
         return lockToFind != null;
     }
 
-    public synchronized void releaseAndDistributeLocks(Integer transactionId) {
+    public synchronized void releaseAndDistributeLocks(Integer transactionId) { // the transaction releasing the locks
         // release the locks of a committed/aborted transaction and give them to the transaction waiting for them for the longest time
         List<Lock> locksToBeRemoved = new ArrayList<>();
 

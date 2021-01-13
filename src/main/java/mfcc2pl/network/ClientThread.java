@@ -54,6 +54,7 @@ public class ClientThread extends Thread {
                     // read the next operation
                     Operation operation = (Operation) objectInputStream.readObject();
 
+                    /* COMMIT */
                     if (operation.getName().equals("commit")) {
                         server.releaseAndDistributeLocks(this.transactionId);
 
@@ -65,7 +66,9 @@ public class ClientThread extends Thread {
 
                         break;
                     }
+                    /* COMMIT */
 
+                    /* SELECT/INSERT/UPDATE/DELETE */
                     Integer transactionHoldingIncompatibleLock = server.getTransactionHoldingIncompatibleLock(operation);
 
                     if (transactionHoldingIncompatibleLock == null) { // no incompatible lock

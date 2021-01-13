@@ -18,11 +18,11 @@ public class Client {
     public static void main(String[] args) throws IOException {
         Client client = new Client();
 
+        Socket socket = new Socket(SERVER_ADDRESS, PORT);
+
         // choose the transaction this client will execute
         System.out.print("\nTransaction number: \n");
         int transactionNumber = Integer.parseInt(client.readFromKeyboard());
-
-        Socket socket = new Socket(SERVER_ADDRESS, PORT);
 
         List<Operation> transaction = Transactions.getTransactions().get(transactionNumber);
 
@@ -32,15 +32,15 @@ public class Client {
 
             System.out.println("Press any key to start the transaction - start sending the operations to the server: ");
 
-            if (firstRun) {
-                // send all operations inside a transaction at once
+            if (firstRun) { // trigger the operations only the first time; at restart, take them automatically
+                // SEND ALL OPERATIONS INSIDE A TRANSACTION AT ONCE
                 client.readFromKeyboard();
             }
 
             int i = 0;
 
             while (i < transaction.size()) {
-                // send one operation inside a transaction at a time
+                // SEND ONE OPERATION INSIDE A TRANSACTION AT A TIME
 //                System.out.print("\nPress any key to send the next operation: \n");
 //                client.readFromKeyboard();
 
@@ -61,7 +61,8 @@ public class Client {
                         restart = true; // automatically restart the transaction
                         firstRun = false;
                         break;
-                    } else {
+                    } else { // received the lock, can continue to send operations
+                        System.out.println("I can send operations again!");
                     }
                 }
 
