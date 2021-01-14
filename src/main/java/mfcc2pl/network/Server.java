@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Connection;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class Server {
     protected List<WaitForGraphNode> waitForGraph;
     protected Integer transactionId; // as sequence counter
     protected Integer lockId; // as sequence counter
+    protected Integer commitNr; // for keeping track of the order of commit of the transactions
 
     public static void main(String[] args) throws IOException {
         Server server = new Server();
@@ -40,6 +42,7 @@ public class Server {
         waitForGraph = new ArrayList<>();
         transactionId = 1;
         lockId = 1;
+        commitNr = 1;
     }
 
     public void waitForClients() throws IOException {
@@ -229,6 +232,9 @@ public class Server {
         getTransaction(transactionId).setStatus(status);
         if (status.equals("aborted")) {
             getTransaction(transactionId).setOperations(new ArrayList<>());
+        } else {
+            getTransaction(transactionId).setCommitNr(commitNr++);
+            getTransaction(transactionId).setCommitTs(new Timestamp(System.currentTimeMillis()));
         }
     }
 
@@ -315,7 +321,11 @@ public class Server {
     public void displayTransactions() {
         System.out.println("Transactions: ");
         for (Transaction transaction : this.transactions) {
-            System.out.println(transaction.getId() + " *** " + transaction.getTs() + " *** " + transaction.getStatus());
+            if (transaction.getStatus().equals("committed")) {
+                System.out.println(transaction.getId() + " *** " + transaction.getTs() + " *** " + transaction.getStatus() + " *** #" + transaction.getCommitNr() + " *** " + transaction.getCommitTs());
+            } else {
+                System.out.println(transaction.getId() + " *** " + transaction.getTs() + " *** " + transaction.getStatus());
+            }
             for (Operation operation : transaction.getOperations()) {
                 System.out.println("\t" + operation);
             }

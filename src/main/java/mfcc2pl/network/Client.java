@@ -34,15 +34,15 @@ public class Client {
 
             if (firstRun) { // trigger the operations only the first time; at restart, take them automatically
                 // SEND ALL OPERATIONS INSIDE A TRANSACTION AT ONCE
-//                client.readFromKeyboard();
+                client.readFromKeyboard();
             }
 
             int i = 0;
 
             while (i < transaction.size()) {
                 // SEND ONE OPERATION INSIDE A TRANSACTION AT A TIME
-                System.out.print("\nPress any key to send the next operation: \n");
-                client.readFromKeyboard();
+//                System.out.print("\nPress any key to send the next operation: \n");
+//                client.readFromKeyboard();
 
                 // send operation to the Server and wait for the response
                 String response = client.sendOperationToServer(transaction.get(i), socket);

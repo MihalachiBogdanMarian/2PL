@@ -11,6 +11,8 @@ public class Transaction {
 
     private int id;
     private Timestamp ts;
+    private Timestamp commitTs;
+    private Integer commitNr;
     private String status;
     List<Operation> operations;
 
@@ -18,6 +20,8 @@ public class Transaction {
         this.id = id;
         this.ts = ts;
         this.status = status;
+        this.commitTs = null;
+        this.commitNr = null;
         operations = new ArrayList<>();
     }
 
@@ -70,13 +74,40 @@ public class Transaction {
         this.operations = operations;
     }
 
+    public Timestamp getCommitTs() {
+        return commitTs;
+    }
+
+    public void setCommitTs(Timestamp commitTs) {
+        this.commitTs = commitTs;
+    }
+
+    public Integer getCommitNr() {
+        return commitNr;
+    }
+
+    public void setCommitNr(Integer commitNr) {
+        this.commitNr = commitNr;
+    }
+
     @Override
     public String toString() {
-        return "Transaction{" +
-                "id=" + id +
-                ", ts=" + ts +
-                ", status='" + status + '\'' +
-                ", operations=" + operations +
-                '}';
+        if (this.status.equals("committed")) {
+            return "Transaction{" +
+                    "id=" + id +
+                    ", ts=" + ts +
+                    ", commitTs=" + commitTs +
+                    ", commitNr=" + commitNr +
+                    ", status='" + status + '\'' +
+                    ", operations=" + operations +
+                    '}';
+        } else {
+            return "Transaction{" +
+                    "id=" + id +
+                    ", ts=" + ts +
+                    ", status='" + status + '\'' +
+                    ", operations=" + operations +
+                    '}';
+        }
     }
 }
