@@ -1,10 +1,12 @@
 package mfcc2pl.sqlutilities.controllers;
 
-import mfcc2pl.Utilities;
 import mfcc2pl.sqlutilities.model.FlightStaff;
 import mfcc2pl.sqlutilities.model.SearchCondition;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +25,7 @@ public class FlightStaffController {
     public List<Map<String, Object>> selectFlightStaff(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> flightStaff = new ArrayList<>();
 
-        String selectStatement = Utilities.formSelectStatement(fields, "flights_staff", searchConditions);
+        String selectStatement = ControllerUtilities.formSelectStatement(fields, "flights_staff", searchConditions);
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);
@@ -73,7 +75,7 @@ public class FlightStaffController {
     }
 
     public void deleteFlightStaff(List<SearchCondition> searchConditions) {
-        String deleteStatement = Utilities.formDeleteStatement("flights_staff", searchConditions);
+        String deleteStatement = ControllerUtilities.formDeleteStatement("flights_staff", searchConditions);
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(deleteStatement);

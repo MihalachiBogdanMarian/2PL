@@ -38,6 +38,7 @@ public class ClientThread extends Thread {
         ObjectInputStream objectInputStream = null;
 
         Transaction transaction;
+        // initialize a new transaction
         this.transactionId = server.transactionId;
         transaction = new Transaction(server.transactionId, new Timestamp(System.currentTimeMillis()), "active");
         server.setTransaction(transaction); // add a newly active transaction to the Transactions structure

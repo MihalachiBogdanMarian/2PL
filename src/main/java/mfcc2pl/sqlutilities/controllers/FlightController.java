@@ -1,9 +1,9 @@
 package mfcc2pl.sqlutilities.controllers;
 
-import mfcc2pl.Utilities;
 import mfcc2pl.sqlutilities.model.Flight;
 import mfcc2pl.sqlutilities.model.SearchCondition;
 
+import javax.swing.text.Utilities;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,7 +23,7 @@ public class FlightController {
     public List<Map<String, Object>> selectFlights(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> flights = new ArrayList<>();
 
-        String selectStatement = Utilities.formSelectStatement(fields, "flights", searchConditions);
+        String selectStatement = ControllerUtilities.formSelectStatement(fields, "flights", searchConditions);
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);
@@ -71,13 +71,13 @@ public class FlightController {
         String updateStatement;
         switch (updateType) {
             case "i":
-                updateStatement = Utilities.formUpdateStatementIncrement("flights", fieldName, searchConditions);
+                updateStatement = ControllerUtilities.formUpdateStatementIncrement("flights", fieldName, searchConditions);
                 break;
             case "d":
-                updateStatement = Utilities.formUpdateStatementDecrement("flights", fieldName, searchConditions);
+                updateStatement = ControllerUtilities.formUpdateStatementDecrement("flights", fieldName, searchConditions);
                 break;
             default:
-                updateStatement = Utilities.formUpdateStatement("flights", fieldName, searchConditions);
+                updateStatement = ControllerUtilities.formUpdateStatement("flights", fieldName, searchConditions);
                 break;
         }
 
@@ -99,7 +99,7 @@ public class FlightController {
     }
 
     public void deleteFlights(List<SearchCondition> searchConditions) {
-        String deleteStatement = Utilities.formDeleteStatement("flights", searchConditions);
+        String deleteStatement = ControllerUtilities.formDeleteStatement("flights", searchConditions);
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(deleteStatement);

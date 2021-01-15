@@ -1,9 +1,9 @@
 package mfcc2pl.sqlutilities.controllers;
 
-import mfcc2pl.Utilities;
 import mfcc2pl.sqlutilities.model.FlightInDeposit;
 import mfcc2pl.sqlutilities.model.SearchCondition;
 
+import javax.swing.text.Utilities;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,7 +23,7 @@ public class FlightInDepositController {
     public List<Map<String, Object>> selectFlightsInDeposit(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> flightsInDeposit = new ArrayList<>();
 
-        String selectStatement = Utilities.formSelectStatement(fields, "flights_deposit", searchConditions);
+        String selectStatement = ControllerUtilities.formSelectStatement(fields, "flights_deposit", searchConditions);
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);
@@ -81,7 +81,7 @@ public class FlightInDepositController {
     }
 
     public void deleteFlightInDeposit(List<SearchCondition> searchConditions) {
-        String deleteStatement = Utilities.formDeleteStatement("flights_deposit", searchConditions);
+        String deleteStatement = ControllerUtilities.formDeleteStatement("flights_deposit", searchConditions);
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(deleteStatement);

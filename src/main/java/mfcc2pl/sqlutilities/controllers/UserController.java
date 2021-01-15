@@ -1,10 +1,13 @@
 package mfcc2pl.sqlutilities.controllers;
 
-import mfcc2pl.Utilities;
 import mfcc2pl.sqlutilities.model.SearchCondition;
 import mfcc2pl.sqlutilities.model.User;
 
-import java.sql.*;
+import javax.swing.text.Utilities;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +26,7 @@ public class UserController {
     public List<Map<String, Object>> selectUsers(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> users = new ArrayList<>();
 
-        String selectStatement = Utilities.formSelectStatement(fields, "users", searchConditions);
+        String selectStatement = ControllerUtilities.formSelectStatement(fields, "users", searchConditions);
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);
@@ -96,13 +99,13 @@ public class UserController {
         String updateStatement;
         switch (updateType) {
             case "i":
-                updateStatement = Utilities.formUpdateStatementIncrement("users", fieldName, searchConditions);
+                updateStatement = ControllerUtilities.formUpdateStatementIncrement("users", fieldName, searchConditions);
                 break;
             case "d":
-                updateStatement = Utilities.formUpdateStatementDecrement("users", fieldName, searchConditions);
+                updateStatement = ControllerUtilities.formUpdateStatementDecrement("users", fieldName, searchConditions);
                 break;
             default:
-                updateStatement = Utilities.formUpdateStatement("users", fieldName, searchConditions);
+                updateStatement = ControllerUtilities.formUpdateStatement("users", fieldName, searchConditions);
                 break;
         }
 
@@ -124,7 +127,7 @@ public class UserController {
     }
 
     public void deleteUsers(List<SearchCondition> searchConditions) {
-        String deleteStatement = Utilities.formDeleteStatement("users", searchConditions);
+        String deleteStatement = ControllerUtilities.formDeleteStatement("users", searchConditions);
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(deleteStatement);

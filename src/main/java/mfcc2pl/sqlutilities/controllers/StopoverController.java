@@ -1,10 +1,12 @@
 package mfcc2pl.sqlutilities.controllers;
 
-import mfcc2pl.Utilities;
 import mfcc2pl.sqlutilities.model.SearchCondition;
 import mfcc2pl.sqlutilities.model.Stopover;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +25,7 @@ public class StopoverController {
     public List<Map<String, Object>> selectStopovers(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> stopovers = new ArrayList<>();
 
-        String selectStatement = Utilities.formSelectStatement(fields, "stopovers", searchConditions);
+        String selectStatement = ControllerUtilities.formSelectStatement(fields, "stopovers", searchConditions);
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);
@@ -75,7 +77,7 @@ public class StopoverController {
     }
 
     public void deleteStopovers(List<SearchCondition> searchConditions) {
-        String deleteStatement = Utilities.formDeleteStatement("stopovers", searchConditions);
+        String deleteStatement = ControllerUtilities.formDeleteStatement("stopovers", searchConditions);
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(deleteStatement);

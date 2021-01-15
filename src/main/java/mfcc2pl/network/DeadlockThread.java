@@ -21,17 +21,17 @@ public class DeadlockThread extends Thread {
     @Override
     public void run() {
         while (true) {
-            Pair<Integer, Integer> transactionInDeadlockId = server.hasSimpleDeadlock();
-            if (transactionInDeadlockId != null) {
+            Pair<Integer, Integer> transactionsInDeadlockIds = server.hasSimpleDeadlock();
+            if (transactionsInDeadlockIds != null) {
 
                 System.out.println();
-                System.out.println("Deadlock: aborting transaction " + transactionInDeadlockId.get1st());
-                for (Operation operation : server.getTransaction(transactionInDeadlockId.get1st()).getOperations()) {
+                System.out.println("Deadlock: aborting transaction " + transactionsInDeadlockIds.get1st());
+                for (Operation operation : server.getTransaction(transactionsInDeadlockIds.get1st()).getOperations()) {
                     System.out.println("\t" + operation);
                 }
                 System.out.println();
 
-                server.resolveDeadlock(conn1, conn2, transactionInDeadlockId);
+                server.resolveDeadlock(conn1, conn2, transactionsInDeadlockIds);
             }
 //            try {
 //                Thread.sleep(1000);

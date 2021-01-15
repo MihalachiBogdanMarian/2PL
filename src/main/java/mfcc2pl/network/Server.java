@@ -188,6 +188,8 @@ public class Server {
                 giveLock(lock, transactionId, "any");
             }
         }
+
+        // remove the locks from the Locks structure
         locks.removeAll(locksToBeRemoved);
     }
 
@@ -209,7 +211,7 @@ public class Server {
                         .orElse(null);
             }
             if (waitForGraphNode != null) {
-                // give it the lock
+                // give the lock to the transaction waiting for it
                 locks.add(new Lock(lockId, waitForGraphNode.getLockType(), lock.getTable(), waitForGraphNode.getTransactionIdWaitsLock()));
                 lockId++;
 

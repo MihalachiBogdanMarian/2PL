@@ -1,9 +1,12 @@
 package mfcc2pl.sqlutilities.controllers;
 
-import mfcc2pl.Utilities;
 import mfcc2pl.sqlutilities.model.SearchCondition;
 
-import java.sql.*;
+import javax.swing.text.Utilities;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +25,7 @@ public class CompanyController {
     public List<Map<String, Object>> selectCompanies(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> companies = new ArrayList<>();
 
-        String selectStatement = Utilities.formSelectStatement(fields, "companies", searchConditions);
+        String selectStatement = ControllerUtilities.formSelectStatement(fields, "companies", searchConditions);
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);

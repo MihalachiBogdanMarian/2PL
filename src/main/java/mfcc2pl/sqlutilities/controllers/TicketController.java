@@ -1,10 +1,12 @@
 package mfcc2pl.sqlutilities.controllers;
 
-import mfcc2pl.Utilities;
 import mfcc2pl.sqlutilities.model.SearchCondition;
 import mfcc2pl.sqlutilities.model.Ticket;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +25,7 @@ public class TicketController {
     public List<Map<String, Object>> selectTickets(List<String> fields, List<SearchCondition> searchConditions) {
         List<Map<String, Object>> tickets = new ArrayList<>();
 
-        String selectStatement = Utilities.formSelectStatement(fields, "tickets", searchConditions);
+        String selectStatement = ControllerUtilities.formSelectStatement(fields, "tickets", searchConditions);
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(selectStatement);
@@ -78,13 +80,13 @@ public class TicketController {
         String updateStatement;
         switch (updateType) {
             case "i":
-                updateStatement = Utilities.formUpdateStatementIncrement("tickets", fieldName, searchConditions);
+                updateStatement = ControllerUtilities.formUpdateStatementIncrement("tickets", fieldName, searchConditions);
                 break;
             case "d":
-                updateStatement = Utilities.formUpdateStatementDecrement("tickets", fieldName, searchConditions);
+                updateStatement = ControllerUtilities.formUpdateStatementDecrement("tickets", fieldName, searchConditions);
                 break;
             default:
-                updateStatement = Utilities.formUpdateStatement("tickets", fieldName, searchConditions);
+                updateStatement = ControllerUtilities.formUpdateStatement("tickets", fieldName, searchConditions);
                 break;
         }
 
@@ -101,7 +103,7 @@ public class TicketController {
     }
 
     public void deleteTickets(List<SearchCondition> searchConditions) {
-        String deleteStatement = Utilities.formDeleteStatement("tickets", searchConditions);
+        String deleteStatement = ControllerUtilities.formDeleteStatement("tickets", searchConditions);
 
         try {
             PreparedStatement pstmt = conn.prepareStatement(deleteStatement);

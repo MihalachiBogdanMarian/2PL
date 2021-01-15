@@ -1,5 +1,6 @@
 package mfcc2pl;
 
+import mfcc2pl.sqlutilities.controllers.ControllerUtilities;
 import mfcc2pl.sqlutilities.controllers.UserController;
 import mfcc2pl.sqlutilities.dbconnection.Database;
 import mfcc2pl.sqlutilities.model.SearchCondition;
@@ -11,7 +12,7 @@ import java.util.Map;
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println(Utilities.formSelectStatement(Arrays.asList("id"),
+        System.out.println(ControllerUtilities.formSelectStatement(Arrays.asList("id"),
                 "users",
                 Arrays.asList(new SearchCondition("email", "=", "dave101@user.com"),
                         new SearchCondition("password", "=", "8GMLWPO90S"))));
@@ -34,13 +35,13 @@ public class Main {
 //                "Tokyo", "0723999845", "laurel300@user.com", "4DU97GH3W8", "user"));
 //        Database.commit("users");
 
-        System.out.println(Utilities.formUpdateStatement("users",
+        System.out.println(ControllerUtilities.formUpdateStatement("users",
                 "logged",
                 Arrays.asList(new SearchCondition("id", "=", "11"))));
-        System.out.println(Utilities.formUpdateStatementIncrement("flights",
+        System.out.println(ControllerUtilities.formUpdateStatementIncrement("flights",
                 "first_class_seats",
                 Arrays.asList(new SearchCondition("id", "=", "60"))));
-        System.out.println(Utilities.formDeleteStatement("flights",
+        System.out.println(ControllerUtilities.formDeleteStatement("flights",
                 Arrays.asList(new SearchCondition("passenger_id", "=", "100"), new SearchCondition("flight_id", "=", "60"))));
 
 //        new UserController(Database.getConnection("users")).updateUsers("u", "first_name", "David", Arrays.asList(new SearchCondition("email", "=", "dave101@user.com"),
